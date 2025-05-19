@@ -22,6 +22,8 @@ dependencies = [
 [tool.poetry]
 packages = [{include = "expenses_bot", from = "src"}]
 
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.8"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"
