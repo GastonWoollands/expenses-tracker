@@ -6,8 +6,9 @@ from typing import Any, Dict, Optional
 from functools import lru_cache
 from agno.agent import Agent
 from agno.models.google import Gemini
+from config import GEMINI_MODEL_BOT_EXPENSES, get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 #--------------------------------------------------------
 
@@ -24,7 +25,7 @@ def get_agent() -> Agent:
     """Create and cache the LLM agent."""
     try:
         return Agent(
-            model=Gemini(id=os.getenv("GEMINI_MODEL_BOT_EXPENSES", "gemini-2.0-flash")),
+            model=Gemini(id=GEMINI_MODEL_BOT_EXPENSES or "gemini-2.0-flash"),
             markdown=True,
         )
     except Exception as e:

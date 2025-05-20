@@ -7,12 +7,12 @@ from sheets import add_expense
 import logging
 from datetime import datetime
 import time
+from config import TELEGRAM_TOKEN, TELEGRAM_USER_ID, get_logger
 
 #--------------------------------------------------------
 
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN_BOT_EXPENSES")
-logger = logging.getLogger(__name__)
-ALLOWED_USER_ID = os.getenv("TELEGRAM_USER_ID")
+logger = get_logger(__name__)
+ALLOWED_USER_ID = TELEGRAM_USER_ID
 
 #--------------------------------------------------------
 

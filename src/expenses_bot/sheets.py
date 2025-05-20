@@ -6,18 +6,19 @@ from dotenv import load_dotenv
 from gspread import authorize
 from oauth2client.service_account import ServiceAccountCredentials
 from googleapiclient.discovery import build
+from config import GSHEETS_CREDENTIALS, GSHEETS_SHEET_NAME, GSHEETS_EMAIL, get_logger
 
 #--------------------------------------------------------
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 #--------------------------------------------------------
 
 load_dotenv()
 
-CREDENTIALS_PATH = os.getenv("GSHEETS_CREDENTIALS", "credentials/expenses-bot-460118-2b5525e241d9.json")
-SHEET_NAME = os.getenv("GSHEETS_SHEET_NAME", "Expenses")
-EMAIL = os.getenv("GSHEETS_EMAIL", "g.woollands@gmail.com")
+CREDENTIALS_PATH = GSHEETS_CREDENTIALS
+SHEET_NAME = GSHEETS_SHEET_NAME
+EMAIL = GSHEETS_EMAIL
 
 #--------------------------------------------------------
 
