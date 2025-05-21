@@ -1,20 +1,19 @@
-import os
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import logging
 from functools import lru_cache
 from typing import Optional
-from dotenv import load_dotenv
 from gspread import authorize
 from oauth2client.service_account import ServiceAccountCredentials
 from googleapiclient.discovery import build
-from config import GSHEETS_CREDENTIALS, GSHEETS_SHEET_NAME, GSHEETS_EMAIL, get_logger
+from expenses_bot.config import GSHEETS_CREDENTIALS, GSHEETS_SHEET_NAME, GSHEETS_EMAIL, get_logger
 
 #--------------------------------------------------------
 
 logger = get_logger(__name__)
 
 #--------------------------------------------------------
-
-load_dotenv()
 
 CREDENTIALS_PATH = GSHEETS_CREDENTIALS
 SHEET_NAME = GSHEETS_SHEET_NAME

@@ -1,4 +1,6 @@
-import os
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import re
 import json
 import logging
@@ -6,7 +8,7 @@ from typing import Any, Dict, Optional
 from functools import lru_cache
 from agno.agent import Agent
 from agno.models.google import Gemini
-from config import GEMINI_MODEL_BOT_EXPENSES, get_logger
+from expenses_bot.config import GEMINI_MODEL_BOT_EXPENSES, get_logger
 
 logger = get_logger(__name__)
 
