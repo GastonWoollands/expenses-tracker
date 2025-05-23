@@ -16,7 +16,10 @@ dependencies = [
     "google-auth-oauthlib (>=1.2.2,<2.0.0)",
     "agno (>=1.5.1,<2.0.0)",
     "pytest (>=8.3.5,<9.0.0)",
-    "google-genai (>=1.15.0,<2.0.0)"
+    "google-genai (>=1.15.0,<2.0.0)",
+    "fastapi (>=0.115.12,<0.116.0)",
+    "uvicorn (>=0.34.2,<0.35.0)",
+    "telethon (>=1.40.0,<2.0.0)"
 ]
 
 [tool.poetry]

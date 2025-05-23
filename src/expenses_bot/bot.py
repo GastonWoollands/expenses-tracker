@@ -26,7 +26,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     user = update.effective_user.username or update.effective_user.id
     user_id = update.effective_user.id
-    logger.info(f"Received message from {user}: {text}")
+    chat_id = update.effective_chat.id
+    logger.info(f"Received message from {user}: {text} - {user_id} - {chat_id}")
     if not is_authorized(user_id):
         logger.warning(f"Unauthorized access attempt by user {user} (id={user_id})")
         await update.message.reply_text("Access denied. This bot is private.")
@@ -102,7 +103,8 @@ async def confirm_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user.username or update.effective_user.id
     user_id = update.effective_user.id
-    logger.info(f"/start command received from {user}")
+    chat_id = update.effective_chat.id
+    logger.info(f"/start command received from {user} - {user_id} - {chat_id}")
     if not is_authorized(user_id):
         logger.warning(f"Unauthorized /start attempt by user {user} (id={user_id})")
         await update.message.reply_text("Access denied. This bot is private.")
