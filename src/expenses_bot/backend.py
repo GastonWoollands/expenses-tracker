@@ -2,6 +2,9 @@ import os
 from fastapi import FastAPI, Request, HTTPException, status, Depends
 from pydantic import BaseModel
 from telethon import TelegramClient
+from dotenv import load_dotenv
+
+load_dotenv()
 
 API_TOKEN = os.getenv("API_TOKEN")
 TELEGRAM_API_ID = int(os.getenv("TELEGRAM_API_ID", "0"))
