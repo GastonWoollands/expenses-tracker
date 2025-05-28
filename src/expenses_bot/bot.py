@@ -32,6 +32,48 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.warning(f"Unauthorized access attempt by user {user} (id={user_id})")
         await update.message.reply_text("Access denied. This bot is private.")
         return
+    # Check if user is editing an expense
+    editing_id = context.user_data.get("editing")
+    if editing_id:
+        # Expecting a message in the format: Category, Amount, Date, Description
+        try:
+            parts = [p.strip() for p in text.split(",", 3)]
+            if len(parts) != 4:
+                raise ValueError("Invalid format")
+            category, amount, dt, description = parts
+            # Optionally validate/parse amount and date here
+            data = {
+                "category": category,
+                "amount": amount,
+                "datetime": dt,
+                "description": description
+            }
+            context.user_data[editing_id] = data
+            del context.user_data["editing"]
+            reply = (
+                f"Category: {data['category']}\n"
+                f"Amount: {data['amount']}\n"
+                f"Datetime: {data['datetime']}\n"
+                f"Description: {data['description']}"
+            )
+            keyboard = [
+                [
+                    InlineKeyboardButton("✅ Confirm", callback_data=f"confirm_{editing_id}"),
+                    InlineKeyboardButton("❌ Reject", callback_data=f"reject_{editing_id}"),
+                    InlineKeyboardButton("✏️ Edit", callback_data=f"edit_{editing_id}")
+                ]
+            ]
+            await update.message.reply_text(
+                "✅ Updated! Please confirm, reject, or edit again:",
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+        except Exception as e:
+            await update.message.reply_text(
+                "❌ Invalid format. Please send as:\n"
+                "`Category, Amount, Date(YYYY-MM-DD), Description`",
+                parse_mode="Markdown"
+            )
+        return
     try:
         result = classify_expense(text)
         logger.info(f"LLM result for user {user}: {result}")
@@ -59,9 +101,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Description: {data['description']}"
         )
         keyboard = [
-            [InlineKeyboardButton("✅ Confirm", callback_data=data_id)]
+            [
+                InlineKeyboardButton("✅ Confirm", callback_data=f"confirm_{data_id}"),
+                InlineKeyboardButton("❌ Reject", callback_data=f"reject_{data_id}"),
+                InlineKeyboardButton("✏️ Edit", callback_data=f"edit_{data_id}")
+            ]
         ]
-        logger.info(f"Replying to user {user}: {reply} (with confirmation button)")
+        logger.info(f"Replying to user {user}: {reply} (with confirmation and reject buttons)")
         await update.message.reply_text(reply, reply_markup=InlineKeyboardMarkup(keyboard))
     except Exception as e:
         logger.error(f"Error processing message from {user}: {e}")
@@ -69,36 +115,62 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def confirm_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    data_id = query.data
-    data = context.user_data.get(data_id)
-    if not data:
-        await query.answer()
-        await query.edit_message_text("Error: No se encontró la información para guardar.")
-        return
+    data_id_full = query.data
     user = query.from_user.username or query.from_user.id
     user_id = query.from_user.id
-    if not is_authorized(user_id):
-        logger.warning(f"Unauthorized callback attempt by user {user} (id={user_id})")
+
+    if data_id_full.startswith("confirm_"):
+        data_id = data_id_full[len("confirm_"):]
+        data = context.user_data.get(data_id)
+        if not data:
+            await query.answer()
+            await query.edit_message_text("Error: No se encontró la información para guardar.")
+            return
+        if not is_authorized(user_id):
+            logger.warning(f"Unauthorized callback attempt by user {user} (id={user_id})")
+            await query.answer()
+            await query.edit_message_text("Access denied. This bot is private.")
+            return
+        try:
+            add_expense(data["category"], data["amount"], data["datetime"], data["description"])
+            logger.info(f"Expense confirmed and saved for user {user}: {data}")
+            await query.answer()
+            await query.edit_message_text(
+                f"✅ Saved to Google Sheets!\n\n"
+                f"Category: {data['category']}\n"
+                f"Amount: {data['amount']}\n"
+                f"Datetime: {data['datetime']}\n"
+                f"Description: {data['description']}"
+            )
+            # Limpia el dato después de usarlo
+            del context.user_data[data_id]
+        except Exception as e:
+            logger.error(f"Error saving confirmed expense for user {user}: {e}")
+            await query.answer()
+            await query.edit_message_text("Error: Could not save expense to Google Sheets.")
+    elif data_id_full.startswith("reject_"):
+        data_id = data_id_full[len("reject_"):]
+        if data_id in context.user_data:
+            del context.user_data[data_id]
+        logger.info(f"Expense rejected by user {user}. Data ID: {data_id}")
         await query.answer()
-        await query.edit_message_text("Access denied. This bot is private.")
-        return
-    try:
-        add_expense(data["category"], data["amount"], data["datetime"], data["description"])
-        logger.info(f"Expense confirmed and saved for user {user}: {data}")
+        await query.edit_message_text("❌ Expense entry cancelled. Nothing was saved.")
+    elif data_id_full.startswith("edit_"):
+        data_id = data_id_full[len("edit_"):]
+        data = context.user_data.get(data_id)
+        if not data:
+            await query.answer()
+            await query.edit_message_text("Error: No data found to edit.")
+            return
+        # Mark this data_id as being edited
+        context.user_data["editing"] = data_id
         await query.answer()
         await query.edit_message_text(
-            f"✅ Saved to Google Sheets!\n\n"
-            f"Category: {data['category']}\n"
-            f"Amount: {data['amount']}\n"
-            f"Datetime: {data['datetime']}\n"
-            f"Description: {data['description']}"
+            "✏️ Please send the corrected expense in the format:\n"
+            "`Category, Amount, Date(YYYY-MM-DD), Description`\n\n"
+            f"Current: {data['category']}, {data['amount']}, {data['datetime']}, {data['description']}",
+            parse_mode="Markdown"
         )
-        # Limpia el dato después de usarlo
-        del context.user_data[data_id]
-    except Exception as e:
-        logger.error(f"Error saving confirmed expense for user {user}: {e}")
-        await query.answer()
-        await query.edit_message_text("Error: Could not save expense to Google Sheets.")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user.username or update.effective_user.id
