@@ -50,21 +50,21 @@ def _get_prompt(text: str) -> str:
         IMPORTANT: Most texts are from Apple Pay, some are from user plain text.
         IMPORTANT: If you cannot extract a value, use null for amount and datetime, and \"Uncategorized\" for category.
         The categories are:
-        - Food
-        - Subscription
-        - Transport
-        - Housing
-        - Health
-        - Personal
-        - Education
-        - Technology
-        - Shopping
-        - Travel
-        - Bar and restaurant
-        - Leisure
-        - Other
+        - Food (includes groceries, supermarket, etc.)
+        - Subscription (includes Netflix, Cursor, etc.)
+        - Transport (includes Uber, train, bus, Bike, Bicing, etc.)
+        - Housing (includes rent, mortgage, etc.)
+        - Services (includes electricity, water, internet, etc.)
+        - Health (includes gym, yoga, pharmacy, etc.)
+        - Education (includes courses, etc.)
+        - Technology (includes expenses in technology, etc.)
+        - Shopping (includes Amazon, clothes, accesories, etc.)
+        - Travel (includes flights, hotels, etc.)
+        - Bar and restaurant (includes bars, restaurants, cafes, etc.)
+        - Hobby (includes hobbies, socials, etc.)
+        - Other (includes other expenses)
 
-        The expensetext to classify is:
+        The transaction text to classify is:
         {text}
 
         Return ONLY a valid JSON object in the following format (no explanation):
