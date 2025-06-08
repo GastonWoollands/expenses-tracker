@@ -44,3 +44,7 @@ async def send_transaction(
         return {"status": "ok"}
     except Exception as e:
         return {"status": "error", "detail": str(e)}
+
+@app.post("/ping")
+async def ping():
+    return {"status": "pong"}
