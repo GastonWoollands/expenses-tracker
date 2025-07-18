@@ -1,5 +1,8 @@
 from telethon import TelegramClient
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 api_id = int(os.getenv("TELEGRAM_API_ID"))
 api_hash = os.getenv("TELEGRAM_API_HASH")
