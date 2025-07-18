@@ -36,5 +36,7 @@ services:
     container_name: cloudflared_tunnel
     command: tunnel run expenses-backend
     volumes:
-      - ~/.cloudflared:/etc/cloudflared:ro
+      - ${CLOUDFLARED_CONFIG_PATH}:/etc/cloudflared:ro
+    environment:
+      - TUNNEL_ORIGIN_CERT=/etc/cloudflared/cert.pem
     restart: unless-stopped
