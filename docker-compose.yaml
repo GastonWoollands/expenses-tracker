@@ -15,6 +15,7 @@ services:
       - ENV=production
     env_file:
       - .env
+    restart: unless-stopped
 
   bot:
     build: .
@@ -28,6 +29,7 @@ services:
       - ENV=production
     env_file:
       - .env
+    restart: unless-stopped
 
   cloudflared:
     image: cloudflare/cloudflared:latest
