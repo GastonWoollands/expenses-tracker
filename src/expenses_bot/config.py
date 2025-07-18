@@ -29,6 +29,6 @@ TELEGRAM_USER_ID = os.getenv("TELEGRAM_USER_ID")
 GSHEETS_SHEET_NAME = os.getenv("GSHEETS_SHEET_NAME")
 GSHEETS_EMAIL = os.getenv("GSHEETS_EMAIL")
 GEMINI_MODEL_BOT_EXPENSES = os.getenv("GEMINI_MODEL_BOT_EXPENSES")
+GSHEETS_CREDENTIALS = os.getenv("GSHEETS_CREDENTIALS")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-GSHEETS_CREDENTIALS = os.path.join(BASE_DIR, 'credentials', 'expenses-bot-460118-2b5525e241d9.json')
