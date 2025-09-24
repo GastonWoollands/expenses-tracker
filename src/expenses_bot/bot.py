@@ -226,18 +226,26 @@ def main():
     # Schedule daily check at 00:05 local time; on the 1st it posts fixed expenses
     async def monthly_fixed_job(ctx: ContextTypes.DEFAULT_TYPE):
         now = datetime.now(BOT_TZ) if BOT_TZ else datetime.now()
-        if now.day == 1:
-            apply_fixed_expenses_for_month(now.year, now.month)
-    # PTB v20 job queue
-    app.job_queue.run_daily(
-        monthly_fixed_job,
-        time=dtime(hour=0, minute=5),
-        tzinfo=BOT_TZ if BOT_TZ else None,
-    )
-    # Also run once at startup if it's already the 1st (handles container restarts on the 1st)
+        apply_fixed_expenses_for_month(now.year, now.month)
+
+    # Schedule job queue if disponible
+    if getattr(app, "job_queue", None) is not None:
+        app.job_queue.run_monthly(
+            monthly_fixed_job,
+            when=dtime(hour=0, minute=5),
+            day=1,
+            tzinfo=BOT_TZ if BOT_TZ else None,
+        )
+    else:
+        logger.warning(
+            "JobQueue not available. Install 'python-telegram-bot[job-queue]' to enable scheduling."
+        )
+        
+    # Run once at startup if it's the 1st (handles container restarts)
     _now = datetime.now(BOT_TZ) if BOT_TZ else datetime.now()
     if _now.day == 1:
         apply_fixed_expenses_for_month(_now.year, _now.month)
+
     logger.info("Bot is running...")
     app.run_polling()
 
