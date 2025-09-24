@@ -238,7 +238,7 @@ def main():
             day=1
         )
     else:
-        logging.warning(
+        logger.warning(
             "JobQueue not available. Instala 'python-telegram-bot[job-queue]' para habilitar el scheduling."
         )
         
@@ -246,7 +246,7 @@ def main():
     if now.day == 1:
         apply_fixed_expenses_for_month(now.year, now.month)
 
-    logging.info("Bot is running...")
+    logger.info("Bot is running...")
     app.run_polling()
 
 #--------------------------------------------------------
