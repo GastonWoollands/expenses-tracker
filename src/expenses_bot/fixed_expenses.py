@@ -55,6 +55,7 @@ def apply_fixed_expenses_for_month(year: int, month: int) -> int:
     dt = datetime(year, month, 1).strftime("%Y-%m-%d")
     appended = 0
     for it in items:
+        logger.info(f"Fixed expense processed for {year}-{month:02d}: {it['category']} {it['amount']} {dt} {it.get('description', '')} {ok}")
         ok = add_expense_if_missing(it["category"], it["amount"], dt, it.get("description", ""))
         if ok:
             appended += 1

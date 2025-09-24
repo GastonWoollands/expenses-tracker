@@ -124,6 +124,8 @@ def row_exists(dt: str, amount: float, category: str, description: str) -> bool:
 def add_expense_if_missing(category: str, amount: float, dt: str, description: str) -> bool:
     """Appends only if the exact row does not exist. Returns True if appended."""
     if row_exists(dt, amount, category, description):
+        logger.info(f"Row already exists: {dt} {amount} {category} {description}")
         return False
     add_expense(category, amount, dt, description)
+    logger.info(f"Row added: {dt} {amount} {category} {description}")
     return True
