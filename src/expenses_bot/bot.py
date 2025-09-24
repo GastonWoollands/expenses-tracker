@@ -218,7 +218,11 @@ async def run_fixed(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     """Start the Telegram bot."""
-    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+    # Configure Application and JobQueue timezone if available
+    if BOT_TZ:
+        app = ApplicationBuilder().token(TELEGRAM_TOKEN).timezone(BOT_TZ).build()
+    else:
+        app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("fixed", run_fixed))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
@@ -234,7 +238,6 @@ def main():
             monthly_fixed_job,
             when=dtime(hour=0, minute=5),
             day=1,
-            tzinfo=BOT_TZ if BOT_TZ else None,
         )
     else:
         logger.warning(
