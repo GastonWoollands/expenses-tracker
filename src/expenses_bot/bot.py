@@ -235,8 +235,7 @@ def main():
         app.job_queue.run_monthly(
             monthly_fixed_job,
             when=dtime(hour=0, minute=5),
-            day=1,
-            tzinfo=None # No timezone specified - use system timezone
+            day=1
         )
     else:
         logging.warning(
