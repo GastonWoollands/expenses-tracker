@@ -2,12 +2,18 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import json
+import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters, CommandHandler, CallbackQueryHandler
 from llm import classify_expense
 from sheets import add_expense
+from fixed_expenses import apply_fixed_expenses_for_month
 import logging
-from datetime import datetime
+from datetime import datetime, time as dtime
+try:
+    from zoneinfo import ZoneInfo  # Python 3.9+
+except Exception:
+    ZoneInfo = None
 import time
 from config import TELEGRAM_TOKEN, TELEGRAM_USER_ID, get_logger
 
@@ -15,6 +21,8 @@ from config import TELEGRAM_TOKEN, TELEGRAM_USER_ID, get_logger
 
 logger = get_logger(__name__)
 ALLOWED_USER_ID = TELEGRAM_USER_ID
+BOT_TZ_NAME = os.getenv("BOT_TZ") or os.getenv("TZ") or "UTC"
+BOT_TZ = ZoneInfo(BOT_TZ_NAME) if ZoneInfo else None
 
 #--------------------------------------------------------
 
@@ -196,14 +204,40 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info(f"Replying to user {user} with welcome message.")
     await update.message.reply_text(welcome_message, parse_mode="Markdown")
 
+async def run_fixed(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Manually trigger fixed expenses for current month (owner only)."""
+    user_id = update.effective_user.id
+    if not is_authorized(user_id):
+        await update.message.reply_text("Access denied.")
+        return
+    now = datetime.now(BOT_TZ) if BOT_TZ else datetime.now()
+    appended = apply_fixed_expenses_for_month(now.year, now.month)
+    await update.message.reply_text(f"Fixed expenses processed. Appended: {appended}")
+
 #--------------------------------------------------------
 
 def main():
     """Start the Telegram bot."""
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("fixed", run_fixed))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_handler(CallbackQueryHandler(confirm_callback))
+    # Schedule daily check at 00:05 local time; on the 1st it posts fixed expenses
+    async def monthly_fixed_job(ctx: ContextTypes.DEFAULT_TYPE):
+        now = datetime.now(BOT_TZ) if BOT_TZ else datetime.now()
+        if now.day == 1:
+            apply_fixed_expenses_for_month(now.year, now.month)
+    # PTB v20 job queue
+    app.job_queue.run_daily(
+        monthly_fixed_job,
+        time=dtime(hour=0, minute=5),
+        tzinfo=BOT_TZ if BOT_TZ else None,
+    )
+    # Also run once at startup if it's already the 1st (handles container restarts on the 1st)
+    _now = datetime.now(BOT_TZ) if BOT_TZ else datetime.now()
+    if _now.day == 1:
+        apply_fixed_expenses_for_month(_now.year, _now.month)
     logger.info("Bot is running...")
     app.run_polling()
 

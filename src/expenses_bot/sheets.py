@@ -100,3 +100,30 @@ def add_expense(category: str, amount: float, dt: str, description: str):
     """Appends an expense row to the Google Sheet."""
     row = [dt, amount, category, description]
     get_sheet().append_row(row) 
+
+#--------------------------------------------------------
+
+def get_all_values():
+    """Returns all sheet values (including header if present)."""
+    return get_sheet().get_all_values()
+
+#--------------------------------------------------------
+
+def row_exists(dt: str, amount: float, category: str, description: str) -> bool:
+    """Checks if an identical row already exists to keep appends idempotent."""
+    values = get_all_values() or []
+    target = [str(dt), str(amount), str(category), str(description)]
+    for r in values:
+        # Normalize to strings for comparison
+        if [str(x) for x in r[:4]] == target:
+            return True
+    return False
+
+#--------------------------------------------------------
+
+def add_expense_if_missing(category: str, amount: float, dt: str, description: str) -> bool:
+    """Appends only if the exact row does not exist. Returns True if appended."""
+    if row_exists(dt, amount, category, description):
+        return False
+    add_expense(category, amount, dt, description)
+    return True
