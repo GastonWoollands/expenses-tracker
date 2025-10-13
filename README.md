@@ -1,41 +1,60 @@
-# Expenses Tracker Bot
+# Expenses Tracker
 
-A private Telegram bot to help you log and categorize your expenses directly into Google Sheets. Powered by LLM-based classification and Google Sheets integration.
+A modern web application for tracking personal expenses with Firebase authentication, built with FastAPI backend and React frontend.
 
-## Features
+## 🚀 Features
 
-- 📊 Automatic expense categorization (LLM-powered)
-- 🗂️ Google Sheets integration for logging expenses
-- 🤖 Works with Apple Pay receipts and plain text messages
-- 🔒 Private: Only authorized users can access
+- **User Authentication**: Secure Firebase-based user registration and login
+- **Expense Management**: Add, edit, delete, and categorize expenses
+- **Smart Classification**: AI-powered expense categorization using Gemini
+- **Analytics Dashboard**: Visual insights into spending patterns
+- **Local Storage**: SQLite database with optional Google Sheets sync
+- **Responsive Design**: Clean, minimalist UI that works on all devices
 
-## Usage
+## 🏗️ Architecture
 
-1. **Start the Bot**  
-   Run the bot with:
-   ```bash
-   poetry run python src/expenses_bot/bot.py
-   ```
-   or use your preferred method to start the script.
+The project follows a clean separation of concerns:
 
-2. **Interact on Telegram**  
-   - Send your Apple Pay receipt or any expense message (e.g., `Bought coffee for 3.50 on 2024-06-01`).
-   - The bot will extract the category, amount, date, and description.
-   - Confirm, reject, or edit the extracted data using the provided buttons.
-   - Upon confirmation, the expense is logged to your Google Sheet.
+- **Backend** (`backend_py/`): FastAPI-based REST API with SQLite storage
+- **Frontend** (`frontend/`): React TypeScript application
+- **Legacy Bot** (`src/expenses_bot/`): Original Telegram bot (deprecated)
 
-3. **Edit or Correct**  
-   - Use the "✏️ Edit" button to correct any field before saving.
+## 🚀 Quick Start
 
-## Setup
+### Backend Setup
+```bash
+cd backend_py
+pip install -r requirements.txt
+cp env.example .env
+# Edit .env with your configuration
+python run.py
+```
 
-- Configure your Telegram bot token and user ID in `src/expenses_bot/config.py` or via environment variables.
-- Set up Google Sheets credentials as described in the code comments.
+### Frontend Setup
+```bash
+cd frontend
+npm install
+cp env.example .env
+# Edit .env with your Firebase configuration
+npm run dev
+```
 
-## Security
+## 📖 Documentation
 
-- Only the user ID specified in the config can use the bot. Unauthorized users will be denied access.
+- **New Web App**: See [README_NEW.md](README_NEW.md) for complete setup instructions
+- **Legacy Bot**: The original Telegram bot code is preserved in `src/expenses_bot/`
+
+## 🔄 Migration
+
+This project has been migrated from a Telegram bot to a full web application while preserving all original functionality:
+
+- ✅ AI-powered expense classification
+- ✅ Google Sheets integration
+- ✅ Fixed/recurring expenses
+- ✅ Multi-user support (new)
+- ✅ Web-based interface (new)
+- ✅ Advanced analytics (new)
 
 ---
 
-*For more details, see the code in `src/expenses_bot/`.*
+*The web application provides all the functionality of the original Telegram bot with additional features and a modern user interface.*
