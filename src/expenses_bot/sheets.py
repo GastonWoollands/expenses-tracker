@@ -2,12 +2,13 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import logging
+import json
 from functools import lru_cache
 from typing import Optional
 from gspread import authorize
 from oauth2client.service_account import ServiceAccountCredentials
 from googleapiclient.discovery import build
-from expenses_bot.config import GSHEETS_CREDENTIALS, GSHEETS_SHEET_NAME, GSHEETS_EMAIL, get_logger
+from expenses_bot.config import GSHEETS_SHEET_NAME, GSHEETS_EMAIL, get_logger
 
 #--------------------------------------------------------
 
@@ -15,7 +16,6 @@ logger = get_logger(__name__)
 
 #--------------------------------------------------------
 
-CREDENTIALS_PATH = GSHEETS_CREDENTIALS
 SHEET_NAME = GSHEETS_SHEET_NAME
 EMAIL = GSHEETS_EMAIL
 
@@ -26,7 +26,13 @@ def _get_creds():
         'https://spreadsheets.google.com/feeds',
         'https://www.googleapis.com/auth/drive',
     ]
-    return ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_PATH, scope)
+
+    creds_json = os.getenv("GSHEETS_CREDENTIALS")
+    if not creds_json:
+        raise RuntimeError("GSHEETS_CREDENTIALS is not set in the environment.")
+    
+    creds_dict = json.loads(creds_json)
+    return ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 
 #--------------------------------------------------------
 
