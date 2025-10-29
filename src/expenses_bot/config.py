@@ -12,14 +12,18 @@ def get_logger(name=None):
 
 load_dotenv()
 
+# Do not hard-fail on import. Sheets code will validate when used.
 REQUIRED_VARS = [
     "GSHEETS_EMAIL",
-    "GSHEETS_CREDENTIALS"
+    "GSHEETS_CREDENTIALS",
 ]
 
 missing = [var for var in REQUIRED_VARS if os.getenv(var) is None]
 if missing:
-    raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}")
+    logging.getLogger(__name__).warning(
+        "Missing env vars at startup (will be required when using Sheets): %s",
+        ", ".join(missing),
+    )
 
 # TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN_BOT_EXPENSES")
 # TELEGRAM_USER_ID = os.getenv("TELEGRAM_USER_ID")
