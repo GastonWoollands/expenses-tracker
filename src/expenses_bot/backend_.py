@@ -1,8 +1,9 @@
 import os
 import json
 from datetime import datetime
-from fastapi import FastAPI, Request, HTTPException, status
+from fastapi import FastAPI, Request, HTTPException, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from expenses_bot.config import get_logger
 
 # Initialize logging first
@@ -12,6 +13,7 @@ logger = get_logger(__name__)
 WHATSAPP_VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN")
 WHATSAPP_ACCESS_TOKEN = os.getenv("WHATSAPP_ACCESS_TOKEN")
 WHATSAPP_PHONE_NUMBER_ID = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
+API_TOKEN = os.getenv("API_TOKEN")
 
 # Validate required WhatsApp environment variables
 if not WHATSAPP_VERIFY_TOKEN:
@@ -45,6 +47,20 @@ async def ping():
     """Health check endpoint."""
     return {"status": "pong"}
 
+#---------------------------------------------
+# Auth and input models for direct API usage
+
+class DirectMessage(BaseModel):
+    from_number: str
+    message: str
+
+async def verify_token(request: Request):
+    auth = request.headers.get("Authorization")
+    if not API_TOKEN:
+        return  # No token required if not configured
+    if not auth or auth != f"Bearer {API_TOKEN}":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or missing API token.")
+
 @app.get("/webhook")
 async def whatsapp_verify(request: Request):
     """WhatsApp webhook verification endpoint."""
@@ -67,7 +83,6 @@ async def whatsapp_verify(request: Request):
 async def whatsapp_webhook(request: Request):
     """Receive messages from WhatsApp Business API."""
     try:
-        # Import here to avoid config issues at startup
         from expenses_bot.llm import classify_expense
         from expenses_bot.sheets import add_expense
         
@@ -154,6 +169,13 @@ async def process_whatsapp_message(message: dict, classify_expense_func, add_exp
         
         description = result.get("description") or message_text
         
+        # Normalize amount to float when possible
+        try:
+            if isinstance(amount, str):
+                amount = float(amount.replace(",", "").strip())
+        except Exception:
+            pass
+
         # Save to Google Sheets
         try:
             add_expense_func(category, amount, dt, description)
@@ -207,6 +229,25 @@ async def send_whatsapp_reply(to_number: str, message_text: str):
                 
     except Exception as e:
         logger.error(f"Error sending WhatsApp reply: {e}")
+
+@app.post("/send_message")
+async def send_message(data: DirectMessage, _: None = Depends(verify_token)):
+    """Direct API to classify and save a message, then notify the user via WhatsApp."""
+    try:
+        from expenses_bot.llm import classify_expense
+        from expenses_bot.sheets import add_expense
+
+        fake_message = {
+            "id": "api_direct_msg",
+            "from": data.from_number,
+            "type": "text",
+            "text": {"body": data.message},
+        }
+        await process_whatsapp_message(fake_message, classify_expense, add_expense)
+        return {"status": "ok"}
+    except Exception as e:
+        logger.error(f"Direct send_message error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.on_event("startup")
 async def startup():
