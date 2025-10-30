@@ -23,4 +23,12 @@ def test_classify_expense_non_expense():
     result = classify_expense(text)
     assert isinstance(result, dict)
     assert result["category"] == "Uncategorized"
-    print("Non-expense result:", result) 
+    print("Non-expense result:", result)
+
+def main():
+    test_classify_expense_apple_pay()
+    test_classify_expense_plain_text()
+    test_classify_expense_non_expense()
+
+if __name__ == "__main__":
+    main()

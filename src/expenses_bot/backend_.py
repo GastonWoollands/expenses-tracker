@@ -180,13 +180,25 @@ async def process_whatsapp_message(message: dict, classify_expense_func, add_exp
         try:
             add_expense_func(category, amount, dt, description)
             logger.info(f"Expense saved: {category} - {amount} - {dt} - {description}")
-            
+
+            # Compact list-style confirmation
+            def _fmt_amount(v):
+                try:
+                    return f"{float(v):.2f}"
+                except Exception:
+                    return str(v) if v is not None else "-"
+
+            amount_str = _fmt_amount(amount)
+            desc = (description or "-").strip()
+            if len(desc) > 120:
+                desc = desc[:120] + "…"
+
             confirmation_msg = (
-                f"✅ Expense saved!\n\n"
-                f"📁 Category: {category}\n"
-                f"💰 Amount: {amount}\n"
-                f"📅 Date: {dt}\n"
-                f"📝 Description: {description}"
+                "Expense saved!\n"
+                f"- Category: {category}\n"
+                f"- Amount: {amount_str}\n"
+                f"- Date: {dt}\n"
+                f"- Description: {desc}"
             )
             await send_whatsapp_reply(from_number, confirmation_msg)
             
