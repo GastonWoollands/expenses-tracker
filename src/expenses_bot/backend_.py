@@ -1,4 +1,5 @@
 import os
+import json
 from datetime import datetime
 from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,7 +27,7 @@ app = FastAPI(title="WhatsApp Expenses Bot", version="1.0.0")
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -70,7 +71,21 @@ async def whatsapp_webhook(request: Request):
         from expenses_bot.llm import classify_expense
         from expenses_bot.sheets import add_expense
         
-        data = await request.json()
+        try:
+            raw_body = await request.body()
+        except Exception:
+            raw_body = b""
+
+        if not raw_body:
+            logger.info("Webhook POST received with empty body; acknowledging")
+            return {"status": "ok", "detail": "empty body"}
+
+        try:
+            data = json.loads(raw_body)
+        except Exception:
+            logger.info("Webhook POST received with non-JSON body; acknowledging")
+            return {"status": "ignored", "detail": "invalid json"}
+
         logger.info(f"WhatsApp webhook received")
         
         if data.get("object") != "whatsapp_business_account":
