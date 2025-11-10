@@ -1,46 +1,55 @@
-# Use Python 3.11 slim image as base
-FROM python:3.11-slim
+FROM python:3.11-slim as builder
 
-# Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
-
-ENV POETRY_VERSION=1.8.2 \
-    PYTHONUNBUFFERED=1 \
+    POETRY_VERSION=1.8.2 \
     POETRY_VIRTUALENVS_CREATE=false \
     POETRY_NO_INTERACTION=1
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl build-essential && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+    build-essential \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install Poetry
 RUN pip install poetry poetry-plugin-export
 
-# Set work directory
 WORKDIR /app
 
-# Copy Poetry configuration files
 COPY pyproject.toml poetry.lock ./
 
-# Install dependencies
-RUN poetry export -f requirements.txt --without-hashes -o requirements.txt && \
-    pip install --no-cache-dir -r requirements.txt && \
-    rm requirements.txt
+RUN poetry export -f requirements.txt --without-hashes -o /tmp/requirements.txt
 
-# Copy source code
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app/src \
+    PORT=8000
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    build-essential \
+    && pip install --no-cache-dir --upgrade pip
+
+WORKDIR /app
+
+COPY --from=builder /tmp/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
+    rm /tmp/requirements.txt
+
+RUN apt-get purge -y build-essential && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN useradd --create-home --shell /bin/bash app
+
 COPY src/ ./src/
 
-# Create directories for runtime mounts
-RUN mkdir -p /app/credentials
+RUN chown -R app:app /app
 
-# Create a non-root user for security
-RUN useradd --create-home --shell /bin/bash app && \
-    chown -R app:app /app
 USER app
 
-# Expose ports
 EXPOSE 8000
+
+CMD uvicorn expenses_bot.backend_:app --host 0.0.0.0 --port ${PORT:-8000}
