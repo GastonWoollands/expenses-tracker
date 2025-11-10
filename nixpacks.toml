@@ -3,7 +3,7 @@ nixPkgs = ['python311', 'poetry', 'ffmpeg']
 
 [phases.install]
 cmds = [
-  'poetry install --no-dev'
+  'poetry install --without dev'
 ]
 
 [start]

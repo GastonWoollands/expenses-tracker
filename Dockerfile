@@ -37,10 +37,9 @@ RUN pip install --no-cache-dir poetry poetry-plugin-export
 
 WORKDIR /app
 
-# Copy Poetry files directly from source (not from builder)
 COPY pyproject.toml poetry.lock ./
 
-RUN poetry install --no-dev && \
+RUN poetry install --without dev && \
     rm -rf /root/.cache/pypoetry
 
 RUN apt-get purge -y build-essential && \
