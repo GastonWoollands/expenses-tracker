@@ -125,6 +125,54 @@ async def whatsapp_webhook(request: Request):
         logger.error(traceback.format_exc())
         return {"status": "error", "detail": str(e)}
 
+async def download_whatsapp_audio(media_id: str) -> bytes:
+    """
+    Download audio file from WhatsApp Media API.
+    
+    Args:
+        media_id: WhatsApp media ID
+    
+    Returns:
+        Audio file content as bytes
+    """
+    if not WHATSAPP_ACCESS_TOKEN:
+        raise ValueError("WHATSAPP_ACCESS_TOKEN not set - cannot download media")
+    
+    try:
+        import httpx
+        
+        # First, get the media URL
+        url = f"https://graph.facebook.com/v18.0/{media_id}"
+        headers = {
+            "Authorization": f"Bearer {WHATSAPP_ACCESS_TOKEN}"
+        }
+        
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            # Get media URL
+            response = await client.get(url, headers=headers)
+            if response.status_code != 200:
+                raise Exception(f"Failed to get media URL: {response.status_code}")
+            
+            media_data = response.json()
+            media_url = media_data.get("url")
+            if not media_url:
+                raise Exception("Media URL not found in response")
+            
+            # Download the actual media file
+            download_headers = {
+                "Authorization": f"Bearer {WHATSAPP_ACCESS_TOKEN}"
+            }
+            download_response = await client.get(media_url, headers=download_headers, timeout=60.0)
+            if download_response.status_code != 200:
+                raise Exception(f"Failed to download media: {download_response.status_code}")
+            
+            logger.info(f"Successfully downloaded audio media: {media_id}")
+            return download_response.content
+            
+    except Exception as e:
+        logger.error(f"Error downloading WhatsApp audio {media_id}: {e}")
+        raise
+
 async def process_whatsapp_message(message: dict, classify_expense_func, add_expense_func):
     """Process incoming WhatsApp message and save to Google Sheets."""
     from_number = None
@@ -135,20 +183,81 @@ async def process_whatsapp_message(message: dict, classify_expense_func, add_exp
         
         logger.info(f"Processing WhatsApp message: id={message_id}, from={from_number}, type={message_type}")
         
-        if message_type != "text":
-            logger.info(f"Ignoring non-text message type: {message_type}")
+        message_text = None
+        
+        # Handle text messages
+        if message_type == "text":
+            text_object = message.get("text", {})
+            message_text = text_object.get("body", "")
+            
+            if not message_text:
+                logger.warning("Empty message text received")
+                return
+            
+            logger.info(f"Message text: {message_text}")
+        
+        # Handle audio/voice messages
+        elif message_type in ("audio", "voice"):
+            logger.info(f"Processing {message_type} message")
+            
+            # Get media ID from audio or voice object
+            audio_obj = message.get("audio") or message.get("voice")
+            if not audio_obj:
+                logger.warning(f"No audio/voice object found in {message_type} message")
+                await send_whatsapp_reply(from_number, "Sorry, I couldn't process the audio message.")
+                return
+            
+            media_id = audio_obj.get("id")
+            if not media_id:
+                logger.warning(f"No media ID found in {message_type} message")
+                await send_whatsapp_reply(from_number, "Sorry, I couldn't process the audio message.")
+                return
+            
+            try:
+                # Download audio
+                await send_whatsapp_reply(from_number, "Transcribing audio...")
+                audio_bytes = await download_whatsapp_audio(media_id)
+                
+                # Transcribe audio using Whisper
+                from expenses_bot.transcription import transcribe_audio_bytes
+                
+                mime_type = audio_obj.get("mime_type", "").lower()
+                if "mp3" in mime_type:
+                    file_extension = ".mp3"
+                elif "wav" in mime_type:
+                    file_extension = ".wav"
+                else:
+                    file_extension = ".ogg"
+                
+                message_text = transcribe_audio_bytes(
+                    audio_bytes,
+                    language="es",
+                    model_name="base",
+                    file_extension=file_extension
+                )
+                
+                if not message_text or not message_text.strip():
+                    logger.warning("Empty transcription result")
+                    await send_whatsapp_reply(from_number, "Sorry, I couldn't transcribe the audio message.")
+                    return
+                
+                logger.info(f"Transcribed text: {message_text}")
+                
+            except Exception as e:
+                logger.error(f"Error processing audio message: {e}")
+                await send_whatsapp_reply(from_number, f"Error processing audio: {str(e)}")
+                return
+        
+        else:
+            logger.info(f"Ignoring unsupported message type: {message_type}")
             return
         
-        text_object = message.get("text", {})
-        message_text = text_object.get("body", "")
-        
+        # Process the message text (from text message or transcribed audio)
         if not message_text:
-            logger.warning("Empty message text received")
+            logger.warning("No message text to process")
             return
         
-        logger.info(f"Message text: {message_text}")
-        
-        # Classify using LLM
+        logger.info(f"Classifying text with Gemini LLM: {message_text}")
         result = classify_expense_func(message_text)
         
         if not result or result.get("category") is None:
