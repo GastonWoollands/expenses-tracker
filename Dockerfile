@@ -37,7 +37,8 @@ RUN pip install --no-cache-dir poetry poetry-plugin-export
 
 WORKDIR /app
 
-COPY --from=builder pyproject.toml poetry.lock ./
+# Copy Poetry files directly from source (not from builder)
+COPY pyproject.toml poetry.lock ./
 
 RUN poetry install --no-dev && \
     rm -rf /root/.cache/pypoetry
