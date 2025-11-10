@@ -1,13 +1,19 @@
 import os
 import json
-from datetime import datetime
-from fastapi import FastAPI, Request, HTTPException, status, Depends
+from datetime import datetime, timedelta
+from fastapi import FastAPI, Request, HTTPException, status, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from expenses_bot.config import get_logger
+from collections import defaultdict
 
 # Initialize logging first
 logger = get_logger(__name__)
+
+# In-memory store for processed message IDs (prevents duplicate processing)
+# In production, consider using Redis for distributed systems
+processed_messages = set()
+message_timestamps = defaultdict(list)
 
 # WhatsApp webhook configuration
 WHATSAPP_VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN")
@@ -79,13 +85,55 @@ async def whatsapp_verify(request: Request):
         logger.warning("WhatsApp verification failed")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Verification failed")
 
+def is_message_processed(message_id: str) -> bool:
+    """Check if a message has already been processed."""
+    return message_id in processed_messages
+
+def mark_message_processed(message_id: str):
+    """Mark a message as processed."""
+    processed_messages.add(message_id)
+    message_timestamps[message_id].append(datetime.now())
+    
+    # Clean up old entries (keep last 24 hours)
+    cutoff = datetime.now() - timedelta(hours=24)
+    for msg_id, timestamps in list(message_timestamps.items()):
+        message_timestamps[msg_id] = [ts for ts in timestamps if ts > cutoff]
+        if not message_timestamps[msg_id]:
+            del message_timestamps[msg_id]
+            if msg_id in processed_messages:
+                processed_messages.remove(msg_id)
+
+async def process_messages_background(data: dict):
+    """Background task to process WhatsApp messages."""
+    from expenses_bot.llm import classify_expense
+    from expenses_bot.sheets import add_expense
+    
+    entries = data.get("entry", [])
+    for entry in entries:
+        changes = entry.get("changes", [])
+        for change in changes:
+            value = change.get("value", {})
+            messages = value.get("messages", [])
+            
+            for message in messages:
+                message_id = message.get("id")
+                if message_id and is_message_processed(message_id):
+                    logger.info(f"Message {message_id} already processed, skipping")
+                    continue
+                
+                # Mark as processed immediately to prevent duplicates
+                if message_id:
+                    mark_message_processed(message_id)
+                
+                try:
+                    await process_whatsapp_message(message, classify_expense, add_expense)
+                except Exception as e:
+                    logger.error(f"Error processing message {message_id}: {e}")
+
 @app.post("/webhook")
-async def whatsapp_webhook(request: Request):
+async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
     """Receive messages from WhatsApp Business API."""
     try:
-        from expenses_bot.llm import classify_expense
-        from expenses_bot.sheets import add_expense
-        
         try:
             raw_body = await request.body()
         except Exception:
@@ -107,16 +155,11 @@ async def whatsapp_webhook(request: Request):
             logger.info("Ignoring non-WhatsApp webhook")
             return {"status": "ignored"}
         
-        entries = data.get("entry", [])
-        for entry in entries:
-            changes = entry.get("changes", [])
-            for change in changes:
-                value = change.get("value", {})
-                messages = value.get("messages", [])
-                
-                for message in messages:
-                    await process_whatsapp_message(message, classify_expense, add_expense)
+        # Process messages in background to return 200 OK quickly
+        # This prevents WhatsApp from retrying the webhook
+        background_tasks.add_task(process_messages_background, data)
         
+        # Return 200 OK immediately to prevent WhatsApp retries
         return {"status": "ok"}
         
     except Exception as e:
