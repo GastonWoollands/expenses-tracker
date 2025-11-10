@@ -39,7 +39,7 @@ WORKDIR /app
 
 COPY pyproject.toml poetry.lock ./
 
-RUN poetry install --without dev && \
+RUN poetry install --without dev --no-root && \
     rm -rf /root/.cache/pypoetry
 
 RUN apt-get purge -y build-essential && \
