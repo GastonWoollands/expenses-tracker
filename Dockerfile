@@ -24,18 +24,23 @@ FROM python:3.11-slim
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app/src \
-    PORT=8000
+    PORT=8000 \
+    POETRY_VIRTUALENVS_CREATE=false \
+    POETRY_NO_INTERACTION=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     build-essential \
     && pip install --no-cache-dir --upgrade pip
 
+RUN pip install --no-cache-dir poetry poetry-plugin-export
+
 WORKDIR /app
 
-COPY --from=builder /tmp/requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt && \
-    rm /tmp/requirements.txt
+COPY --from=builder pyproject.toml poetry.lock ./
+
+RUN poetry install --no-dev && \
+    rm -rf /root/.cache/pypoetry
 
 RUN apt-get purge -y build-essential && \
     apt-get autoremove -y && \
@@ -52,4 +57,4 @@ USER app
 
 EXPOSE 8000
 
-CMD uvicorn expenses_bot.backend_:app --host 0.0.0.0 --port ${PORT:-8000}
+CMD poetry run uvicorn expenses_bot.backend_:app --host 0.0.0.0 --port ${PORT:-8000}
