@@ -41,6 +41,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+try:
+    from expenses_bot.api_routes import router as api_router
+    app.include_router(api_router)
+    logger.info("API routes included")
+except Exception as e:
+    logger.warning(f"Failed to include API routes: {e}")
+
 logger.info("WhatsApp backend initialized")
 
 @app.get("/")
@@ -417,6 +424,13 @@ async def send_message(data: DirectMessage, _: None = Depends(verify_token)):
 async def startup():
     """Startup event."""
     logger.info("WhatsApp Expenses Backend starting...")
+    
+    try:
+        from expenses_bot.database import init_db_pool
+        await init_db_pool()
+    except Exception as e:
+        logger.warning(f"Database initialization failed (will continue with Google Sheets only): {e}")
+    
     logger.info("Available routes:")
     for route in app.routes:
         if hasattr(route, "path") and hasattr(route, "methods"):
@@ -426,3 +440,9 @@ async def startup():
 async def shutdown():
     """Shutdown event."""
     logger.info("WhatsApp Expenses Backend shutting down...")
+    
+    try:
+        from expenses_bot.database import close_db_pool
+        await close_db_pool()
+    except Exception as e:
+        logger.warning(f"Error closing database pool: {e}")

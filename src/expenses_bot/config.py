@@ -32,4 +32,10 @@ GSHEETS_EMAIL = os.getenv("GSHEETS_EMAIL")
 GEMINI_MODEL_BOT_EXPENSES = os.getenv("GEMINI_MODEL_BOT_EXPENSES", "gemini-2.0-flash")
 GSHEETS_CREDENTIALS = os.getenv("GSHEETS_CREDENTIALS")
 
+# PostgreSQL / Neon Database Configuration
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+# Firebase Configuration
+FIREBASE_CREDENTIALS = os.getenv("FIREBASE_CREDENTIALS_GUITA")  # JSON string
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
