@@ -5,10 +5,11 @@ python-dotenv>=1.1.0,<2.0.0
 pydantic>=2.0.0,<3.0.0
 python-multipart>=0.0.6,<1.0.0
 
-# Supabase (replaces Firebase + SQLAlchemy)
-supabase>=2.0.0
-postgrest>=0.13.0
-realtime>=1.0.0
+# Database - Neon PostgreSQL
+asyncpg>=0.29.0,<0.30.0
+
+# Firebase Authentication
+firebase-admin>=6.5.0,<7.0.0
 
 # Optional dependencies (uncomment if needed)
 # Google Sheets integration

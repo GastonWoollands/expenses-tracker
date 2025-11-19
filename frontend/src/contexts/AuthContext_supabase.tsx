@@ -1,11 +1,11 @@
 /**
- * Authentication context for managing user state with Supabase
+ * Authentication context for managing user state with Firebase
  */
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { onAuthStateChange, formatAuthUser, signUp, signIn, logout } from '../supabase/auth'
-import type { AuthUser } from '../supabase/auth'
+import { onAuthStateChange, formatAuthUser, signUp, signIn, logout } from '../firebase/auth'
+import type { AuthUser } from '../firebase/auth'
 
 interface AuthContextType {
   user: AuthUser | null
@@ -35,7 +35,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     try {
-      const { data: { subscription } } = onAuthStateChange((user: any) => {
+      const unsubscribe = onAuthStateChange((user: any) => {
         if (user) {
           setUser(formatAuthUser(user))
         } else {
@@ -44,7 +44,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setLoading(false)
       })
 
-      return () => subscription.unsubscribe()
+      return () => unsubscribe()
     } catch (error) {
       console.error('Error in AuthProvider useEffect:', error)
       setLoading(false)

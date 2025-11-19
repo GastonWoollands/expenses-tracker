@@ -1,6 +1,6 @@
 """
 Expenses Tracker Backend API
-FastAPI backend with Supabase authentication and database
+FastAPI backend with Firebase authentication and Neon PostgreSQL database
 """
 
 from fastapi import FastAPI, HTTPException, Depends, status, Response
@@ -9,15 +9,29 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from typing import List, Optional
 import os
+import logging
 from dotenv import load_dotenv
-load_dotenv()
 
-# Updated imports for Supabase
-from auth.supabase_auth import supabase_auth_service
-from services.expense_service_supabase import ExpenseService
+# Load environment variables from .env file
+env_path = os.path.join(os.path.dirname(__file__), '.env')
+if os.path.exists(env_path):
+    load_dotenv(env_path)
+else:
+    load_dotenv()  # Try loading from current directory
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Updated imports for Firebase and Neon
+from auth.firebase_auth import firebase_auth_service, get_current_user_from_token
+from services.expense_service import ExpenseService
 from services.sheets_service import SheetsService
 from services.llm_service import LLMService
-from services.category_service_supabase import category_service
+from services.category_service import category_service
 from models.expense import Expense, ExpenseCreate, ExpenseUpdate
 from models.user import User
 from routers.budget import router as budget_router
@@ -27,7 +41,7 @@ from routers.budget import router as budget_router
 # Initialize FastAPI app
 app = FastAPI(
     title="Expenses Tracker API",
-    description="Backend API for expenses tracking with Supabase authentication",
+    description="Backend API for expenses tracking with Firebase authentication and Neon PostgreSQL",
     version="1.0.0"
 )
 
@@ -62,15 +76,25 @@ async def startup_event():
 
 # Updated dependency to get current user
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Verify Supabase token and return user data"""
+    """Verify Firebase token and return user data"""
     try:
         token = credentials.credentials
-        user_data = await supabase_auth_service.verify_token(token)
-        return User(**user_data)
+        if not token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token is required",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        user = await get_current_user_from_token(token)
+        return user
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"Authentication failed: {type(e).__name__}: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
+            detail=f"Invalid authentication credentials: {str(e)}",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -110,14 +134,16 @@ async def create_category(
 ):
     """Create a new category (admin only)"""
     try:
-        from services.category_service_supabase import CategoryCreate
-        category = await category_service.create_category(CategoryCreate(**category_data))
+        # Add user_id to category data
+        category_data["user_id"] = current_user.uid
+        category = await category_service.create_category(category_data)
         return {
             "id": category.id,
             "key": category.key,
             "name": category.name,
             "description": category.description,
-            "sort_order": category.sort_order
+            "type": category.type,
+            "icon": category.icon
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -130,8 +156,7 @@ async def update_category(
 ):
     """Update a category (admin only)"""
     try:
-        from services.category_service_supabase import CategoryUpdate
-        category = await category_service.update_category(category_id, CategoryUpdate(**category_data))
+        category = await category_service.update_category(category_id, category_data)
         if not category:
             raise HTTPException(status_code=404, detail="Category not found")
         
@@ -140,7 +165,8 @@ async def update_category(
             "key": category.key,
             "name": category.name,
             "description": category.description,
-            "sort_order": category.sort_order
+            "type": category.type,
+            "icon": category.icon
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -2,7 +2,7 @@
  * API client for backend communication
  */
 
-import { supabase } from '../supabase/config'
+import { getSession } from '../firebase/auth'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -14,14 +14,14 @@ class ApiClient {
   }
 
   private async getAuthHeaders(): Promise<Record<string, string>> {
-    const { data: { session } } = await supabase.auth.getSession()
+    const token = await getSession()
     
-    if (!session?.access_token) {
+    if (!token) {
       throw new Error('No authentication token available')
     }
 
     return {
-      'Authorization': `Bearer ${session.access_token}`,
+      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     }
   }

@@ -2,9 +2,9 @@
  * API service for backend communication
  */
 
-import { getSession } from '../supabase/auth';
+import { getSession } from '../firebase/auth';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export interface Expense {
   id: string;
@@ -13,6 +13,7 @@ export interface Expense {
   category: string;
   description: string;
   date: string;
+  currency: string;
   is_fixed: boolean;
   created_at: string;
   updated_at: string;
@@ -23,6 +24,7 @@ export interface ExpenseCreate {
   category: string;
   description: string;
   date: string;
+  currency?: string;
   is_fixed?: boolean;
 }
 
@@ -31,6 +33,7 @@ export interface ExpenseUpdate {
   category?: string;
   description?: string;
   date?: string;
+  currency?: string;
   is_fixed?: boolean;
 }
 
@@ -51,13 +54,15 @@ export interface CategoryBreakdown {
 
 class ApiService {
   private async getAuthHeaders(): Promise<HeadersInit> {
-    const session = await getSession();
-    if (!session?.access_token) {
+    const token = await getSession();
+    if (!token) {
+      console.error('No token available - user may not be authenticated');
       throw new Error('User not authenticated');
     }
 
+    console.log('Auth headers prepared, token length:', token.length);
     return {
-      'Authorization': `Bearer ${session.access_token}`,
+      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     };
   }

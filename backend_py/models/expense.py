@@ -30,6 +30,7 @@ class ExpenseBase(BaseModel):
     category: str = Field(..., description="Expense category")
     description: str = Field(..., min_length=1, max_length=500, description="Expense description")
     date: datetime = Field(..., description="Expense date")
+    currency: str = Field(default="EUR", description="Currency code (e.g., EUR, USD, ARS)")
     is_fixed: bool = Field(default=False, description="Whether this is a fixed/recurring expense")
 
 class ExpenseCreate(ExpenseBase):
@@ -42,6 +43,7 @@ class ExpenseUpdate(BaseModel):
     category: Optional[str] = None
     description: Optional[str] = Field(None, min_length=1, max_length=500)
     date: Optional[datetime] = None
+    currency: Optional[str] = Field(None, description="Currency code (e.g., EUR, USD, ARS)")
     is_fixed: Optional[bool] = None
 
 class Expense(ExpenseBase):
@@ -49,6 +51,7 @@ class Expense(ExpenseBase):
     id: str = Field(..., description="Unique expense ID")
     user_id: str = Field(..., description="User ID who created the expense")
     category_id: str = Field(..., description="Category ID")
+    currency: str = Field(..., description="Currency code")
     created_at: datetime = Field(..., description="When the expense was created")
     updated_at: datetime = Field(..., description="When the expense was last updated")
 

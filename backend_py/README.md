@@ -1,6 +1,6 @@
 # Expenses Tracker Backend
 
-A FastAPI-based backend for personal expense tracking with Firebase authentication, AI-powered expense classification.
+A FastAPI-based backend for personal expense tracking with Firebase authentication and Neon PostgreSQL database.
 
 ## 📁 Project Structure
 
@@ -31,37 +31,40 @@ backend_py/
 ├── auth/                 # Authentication
 │   └── firebase_auth.py  # Firebase token verification
 │
+├── database/             # Database layer
+│   ├── neon_client.py    # Neon PostgreSQL client
+│   └── base_service.py   # Base service for database operations
+│
 ├── config/               # Configuration
 │   └── categories.py     # Expense categories definition
-│
-└── *.db                  # SQLite database files
 ```
 
 ## 🗄️ Database Schema
 
+The database schema is defined in `database/schema.sql` and uses Neon PostgreSQL.
+
 ### Core Entities
 
-**Users** (`User` model)
-- Firebase-authenticated users
-- Stores: `uid`, `email`, `display_name`, `photo_url`, `email_verified`
+**Users** (`users` table)
+- Firebase-authenticated users (Firebase UID as TEXT primary key)
+- Stores: `id` (Firebase UID), `email`, `created_at`
 
-**Expenses** (`ExpenseDB` table)
-- Core expense records
-- Fields: `id`, `user_id`, `amount`, `category`, `description`, `date`, `is_fixed`
-- Links to categories via `category_id`
+**Accounts** (`accounts` table)
+- User financial accounts (cash, bank, credit cards)
+- Fields: `id` (UUID), `user_id` (TEXT), `name`, `type`, `currency`, `created_at`
 
-**Categories** (`CategoryDB` table)
-- Predefined expense categories
-- Fields: `id`, `key`, `name`, `description`, `is_active`, `sort_order`
-- 13 default categories: Food, Subscription, Transport, Housing, etc.
+**Categories** (`categories` table)
+- Expense and income categories
+- Fields: `id` (UUID), `user_id` (TEXT, nullable for global), `name`, `type` (income/expense), `icon`, `created_at`
+- Can be user-specific or global (user_id = NULL)
 
-**Budgets** (`BudgetDB` table)
-- User-defined budget limits per category
-- Fields: `id`, `user_id`, `category_key`, `amount`
+**Transactions** (`transactions` table)
+- Financial transactions (expenses, income, transfers)
+- Fields: `id` (UUID), `user_id` (TEXT), `account_id`, `category_id`, `type`, `amount`, `currency`, `description`, `occurred_at`, `created_at`
 
-**User Income** (`UserIncomeDB` table)
-- Monthly income tracking
-- Fields: `id`, `user_id`, `monthly_income`
+**Budgets** (`budgets` table)
+- User-defined budget limits per category and period
+- Fields: `id` (UUID), `user_id` (TEXT), `category_id`, `amount`, `period` (daily/weekly/monthly/yearly), `created_at`
 
 ## 🔄 Service Layer Architecture
 
@@ -141,13 +144,13 @@ Client Request → Firebase Token → verify_firebase_token() → User Model →
 Required environment variables (see `env.example`):
 
 ```bash
-# Database
-DATABASE_URL=sqlite:///./expenses.db
+# Database - Neon PostgreSQL
+DATABASE_URL=postgresql://user:password@host/database
 
 # Firebase Authentication
-FIREBASE_CREDENTIALS_PATH=/path/to/firebase-credentials.json
+FIREBASE_CREDENTIALS_GUITA='{"type":"service_account","project_id":"guita-fa387",...}'
 # OR
-FIREBASE_CREDENTIALS_JSON={"type":"service_account",...}
+FIREBASE_CREDENTIALS_PATH=/path/to/firebase-credentials.json
 
 # Optional: AI Classification
 GEMINI_API_KEY=your_gemini_api_key
@@ -196,6 +199,7 @@ Client → FastAPI → Service Layer → Database
 ## 📊 Key Features
 
 - **Firebase Authentication** - Secure user management
+- **Neon PostgreSQL Database** - Scalable, serverless PostgreSQL
 - **AI-Powered Classification** - Automatic expense categorization
 - **Budget Management** - Category-based budget tracking
 - **Analytics** - Expense summaries and breakdowns
