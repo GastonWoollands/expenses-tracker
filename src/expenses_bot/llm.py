@@ -49,6 +49,13 @@ def _get_prompt(text: str) -> str:
         IMPORTANT: Classify the expense into a category, if the text does not contain an expense, you should return \"Uncategorized\".
         IMPORTANT: Most texts are from Apple Pay, some are from user plain text.
         IMPORTANT: If you cannot extract a value, use null for amount and datetime, and \"Uncategorized\" for category.
+        
+        ACCEPTED FORMATS AND VERBS:
+        - The text can start with various verbs in Spanish or English: "transaccion", "gaste", "gasto", "compre", "compré", "comprar", "gastar", "spent", "bought", "purchase", etc.
+        - The text can include categories marked with asterisks: "**categoria**" or "*categoria*"
+        - The text can have amounts with currency symbols: "$20", "20$", "20 USD", etc.
+        - The text can be in any order: verb, amount, category, description, date
+        
         The categories are:
         - Food (includes groceries, supermarket, etc.)
         - Subscription (includes Netflix, Cursor, etc.)
@@ -68,13 +75,13 @@ def _get_prompt(text: str) -> str:
         {text}
 
         Return ONLY a valid JSON object in the following format (no explanation):
-        Example "Expent $45 in Lolo Bar 17/05/2025" return:
-        {{
-            "category": "Bar and restaurant",
-            "amount": 45,
-            "datetime": "2025-05-17",
-            "description": "Lolo bar"
-        }}
+        
+        Examples:
+        - "Transaccion $45 en Lolo Bar 17/05/2025" → {{"category": "Bar and restaurant", "amount": 45, "datetime": "2025-05-17", "description": "Lolo bar"}}
+        - "gaste $20 **Food**" → {{"category": "Food", "amount": 20, "datetime": null, "description": "Food expense"}}
+        - "compre $50 en supermercado" → {{"category": "Food", "amount": 50, "datetime": null, "description": "supermercado"}}
+        - "transaccion $20 **categoria**" → Extract the category from the asterisks or infer from context
+        - "gasto $30 transporte" → {{"category": "Transport", "amount": 30, "datetime": null, "description": "transporte"}}
     """
 #--------------------------------------------------------
 
