@@ -35,6 +35,7 @@ from services.category_service import category_service
 from models.expense import Expense, ExpenseCreate, ExpenseUpdate
 from models.user import User, UserUpdate
 from routers.budget import router as budget_router
+from routers.whatsapp import router as whatsapp_router
 from services.user_service import user_service
 
 # Load environment variables
@@ -69,6 +70,7 @@ llm_service = LLMService()
 
 # Include routers
 app.include_router(budget_router, prefix="/api/v1", tags=["budgets"])
+app.include_router(whatsapp_router)
 
 # Initialize default categories on startup
 @app.on_event("startup")

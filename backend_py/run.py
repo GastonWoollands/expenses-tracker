@@ -21,6 +21,10 @@ if __name__ == "__main__":
     if railway_port:
         port = int(railway_port)
     
+    # Disable reload in production (Railway sets RAILWAY_ENVIRONMENT)
+    if os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("RAILWAY"):
+        reload = False
+    
     print(f"Starting Expenses Tracker API on {host}:{port}")
     print(f"Reload mode: {reload}")
     print(f"Environment: {os.getenv('RAILWAY_ENVIRONMENT', 'development')}")
