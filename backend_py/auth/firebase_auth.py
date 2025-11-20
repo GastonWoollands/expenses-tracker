@@ -118,6 +118,9 @@ class FirebaseAuthService:
             return {
                 "uid": uid,
                 "email": email or user_profile.get("email", ""),
+                "name": user_profile.get("name"),
+                "surname": user_profile.get("surname"),
+                "phone_number": user_profile.get("phone_number"),
                 "display_name": user_profile.get("display_name") or decoded_token.get('name') or "",
                 "photo_url": user_profile.get("photo_url") or decoded_token.get('picture') or "",
                 "email_verified": decoded_token.get('email_verified', False),
@@ -156,7 +159,7 @@ class FirebaseAuthService:
         # Try to get existing user by id (TEXT schema - Firebase UID)
         try:
             user = await neon.fetchrow(
-                "SELECT id, email, created_at FROM users WHERE id = $1",
+                "SELECT id, email, name, surname, phone_number, created_at FROM users WHERE id = $1",
                 uid
             )
             
@@ -164,6 +167,9 @@ class FirebaseAuthService:
                 return {
                     "id": str(user["id"]),
                     "email": user.get("email", email),
+                    "name": user.get("name"),
+                    "surname": user.get("surname"),
+                    "phone_number": user.get("phone_number"),
                     "created_at": user.get("created_at")
                 }
         except Exception as e:
@@ -178,7 +184,7 @@ class FirebaseAuthService:
             
             # Fetch the newly created user
             new_user = await neon.fetchrow(
-                "SELECT id, email, created_at FROM users WHERE id = $1",
+                "SELECT id, email, name, surname, phone_number, created_at FROM users WHERE id = $1",
                 uid
             )
             
@@ -186,6 +192,9 @@ class FirebaseAuthService:
                 return {
                     "id": str(new_user["id"]),
                     "email": new_user.get("email", email),
+                    "name": new_user.get("name"),
+                    "surname": new_user.get("surname"),
+                    "phone_number": new_user.get("phone_number"),
                     "created_at": new_user.get("created_at")
                 }
         except Exception as e:
@@ -195,6 +204,9 @@ class FirebaseAuthService:
         return {
             "id": uid,
             "email": email,
+            "name": None,
+            "surname": None,
+            "phone_number": None,
             "created_at": None
         }
     
@@ -205,8 +217,14 @@ class FirebaseAuthService:
         try:
             neon = get_neon()
             await neon.execute(
-                "INSERT INTO users (id, email, created_at) VALUES ($1, $2, NOW()) ON CONFLICT (id) DO NOTHING",
-                user_data["uid"], user_data.get("email", "")
+                """INSERT INTO users (id, email, name, surname, phone_number, created_at) 
+                   VALUES ($1, $2, $3, $4, $5, NOW()) 
+                   ON CONFLICT (id) DO NOTHING""",
+                user_data["uid"], 
+                user_data.get("email", ""),
+                user_data.get("name"),
+                user_data.get("surname"),
+                user_data.get("phone_number")
             )
             return True
         except Exception as e:
@@ -219,13 +237,25 @@ class FirebaseAuthService:
         
         try:
             neon = get_neon()
-            # Note: The users table in the new schema only has id, email, created_at
-            # Additional fields would need to be stored elsewhere or schema extended
-            if "email" in updates:
-                await neon.execute(
-                    "UPDATE users SET email = $1 WHERE id = $2",
-                    updates["email"], user_id
-                )
+            # Build dynamic UPDATE query based on provided fields
+            set_clauses = []
+            values = []
+            param_index = 1
+            
+            allowed_fields = ["email", "name", "surname", "phone_number"]
+            for field in allowed_fields:
+                if field in updates:
+                    set_clauses.append(f"{field} = ${param_index}")
+                    values.append(updates[field])
+                    param_index += 1
+            
+            if not set_clauses:
+                return True  # No updates to make
+            
+            values.append(user_id)  # Add user_id for WHERE clause
+            query = f"UPDATE users SET {', '.join(set_clauses)} WHERE id = ${param_index}"
+            
+            await neon.execute(query, *values)
             return True
         except Exception as e:
             logger.error(f"Failed to update user profile: {str(e)}")

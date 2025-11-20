@@ -2,6 +2,9 @@
 CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     email TEXT NOT NULL UNIQUE,
+    name TEXT,
+    surname TEXT,
+    phone_number TEXT UNIQUE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
@@ -74,11 +77,16 @@ CREATE INDEX IF NOT EXISTS idx_budgets_user_category ON budgets(user_id, categor
 CREATE INDEX IF NOT EXISTS idx_accounts_user ON accounts(user_id);
 CREATE INDEX IF NOT EXISTS idx_categories_user ON categories(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_income_user ON user_income(user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone_number ON users(phone_number) WHERE phone_number IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_users_phone_number_lookup ON users(phone_number);
 
 -- =============================================
 -- Comments
 -- =============================================
 COMMENT ON TABLE users IS 'Users of the system identified by Firebase UID';
+COMMENT ON COLUMN users.name IS 'User first name';
+COMMENT ON COLUMN users.surname IS 'User last name';
+COMMENT ON COLUMN users.phone_number IS 'User phone number (unique)';
 COMMENT ON TABLE accounts IS 'Accounts of each user (cash, banks, credit cards)';
 COMMENT ON TABLE categories IS 'Income and expense categories (can be global or per user)';
 COMMENT ON TABLE transactions IS 'Financial transactions: expenses, income and transfers';

@@ -188,6 +188,23 @@ class ApiService {
   }> {
     return this.request('/api/v1/budgets/all-categories');
   }
+
+  // User Profile
+  async getUserProfile(): Promise<any> {
+    return this.request('/api/v1/users/me');
+  }
+
+  async updateUserProfile(profile: {
+    name?: string;
+    surname?: string;
+    phone_number?: string;
+    email?: string;
+  }): Promise<any> {
+    return this.request('/api/v1/users/me', {
+      method: 'PUT',
+      body: JSON.stringify(profile),
+    });
+  }
 }
 
 export const apiService = new ApiService();

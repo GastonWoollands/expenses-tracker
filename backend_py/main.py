@@ -33,8 +33,9 @@ from services.sheets_service import SheetsService
 from services.llm_service import LLMService
 from services.category_service import category_service
 from models.expense import Expense, ExpenseCreate, ExpenseUpdate
-from models.user import User
+from models.user import User, UserUpdate
 from routers.budget import router as budget_router
+from services.user_service import user_service
 
 # Load environment variables
 
@@ -108,6 +109,62 @@ async def health_check():
 async def verify_token(user: User = Depends(get_current_user)):
     """Verify if the provided token is valid"""
     return {"valid": True, "user": user}
+
+# User profile endpoints
+@app.get("/api/v1/users/me", response_model=User)
+async def get_current_user_profile(current_user: User = Depends(get_current_user)):
+    """Get current user's profile"""
+    try:
+        profile = await user_service.get_user_profile(current_user.uid)
+        if not profile:
+            raise HTTPException(status_code=404, detail="User profile not found")
+        
+        # Merge with current user data
+        return User(
+            uid=profile["uid"],
+            email=profile.get("email", current_user.email),
+            name=profile.get("name"),
+            surname=profile.get("surname"),
+            phone_number=profile.get("phone_number"),
+            display_name=current_user.display_name,
+            photo_url=current_user.photo_url,
+            email_verified=current_user.email_verified,
+            created_at=profile.get("created_at") or current_user.created_at,
+            last_sign_in=current_user.last_sign_in
+        )
+    except Exception as e:
+        logger.error(f"Failed to get user profile: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/v1/users/me", response_model=User)
+async def update_current_user_profile(
+    user_update: UserUpdate,
+    current_user: User = Depends(get_current_user)
+):
+    """Update current user's profile"""
+    try:
+        updated_profile = await user_service.update_user_profile(current_user.uid, user_update)
+        if not updated_profile:
+            raise HTTPException(status_code=404, detail="User profile not found")
+        
+        # Merge with current user data
+        return User(
+            uid=updated_profile["uid"],
+            email=updated_profile.get("email", current_user.email),
+            name=updated_profile.get("name"),
+            surname=updated_profile.get("surname"),
+            phone_number=updated_profile.get("phone_number"),
+            display_name=current_user.display_name,
+            photo_url=current_user.photo_url,
+            email_verified=current_user.email_verified,
+            created_at=updated_profile.get("created_at") or current_user.created_at,
+            last_sign_in=current_user.last_sign_in
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to update user profile: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Category endpoints
 @app.get("/categories", response_model=List[dict])

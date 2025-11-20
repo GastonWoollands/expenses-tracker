@@ -10,6 +10,9 @@ class User(BaseModel):
     """User model for Firebase authentication"""
     uid: str = Field(..., description="Firebase user ID")
     email: str = Field(..., description="User email")
+    name: Optional[str] = Field(None, description="User first name")
+    surname: Optional[str] = Field(None, description="User last name")
+    phone_number: Optional[str] = Field(None, description="User phone number (unique)")
     display_name: Optional[str] = Field(None, description="User display name")
     photo_url: Optional[str] = Field(None, description="User photo URL")
     email_verified: bool = Field(default=False, description="Whether email is verified")
@@ -27,6 +30,13 @@ class UserProfile(BaseModel):
     last_sign_in: Optional[datetime] = Field(None, description="Last sign in time")
     total_expenses: float = Field(default=0.0, description="Total expenses amount")
     total_expenses_count: int = Field(default=0, description="Total number of expenses")
+
+class UserUpdate(BaseModel):
+    """User update model for profile updates"""
+    name: Optional[str] = Field(None, description="User first name")
+    surname: Optional[str] = Field(None, description="User last name")
+    phone_number: Optional[str] = Field(None, description="User phone number (unique)")
+    email: Optional[str] = Field(None, description="User email")
 
 class UserPreferences(BaseModel):
     """User preferences model"""
