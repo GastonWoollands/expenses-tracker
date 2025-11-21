@@ -53,7 +53,7 @@ const CategoryBar: React.FC<CategoryBarProps> = ({
       )}
       
       <div className="divide-y divide-gray-100 dark:divide-gray-800">
-        {data.map((item, index) => (
+        {data.map((item) => (
           <div key={item.category} className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-3">

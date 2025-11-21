@@ -228,7 +228,7 @@ const Budget: React.FC = () => {
       <BudgetCategorySetup
         isOpen={showCategorySetup}
         onClose={() => setShowCategorySetup(false)}
-        onSave={(categories) => {
+        onSave={() => {
           // Refresh budget data after saving
           refreshData();
         }}

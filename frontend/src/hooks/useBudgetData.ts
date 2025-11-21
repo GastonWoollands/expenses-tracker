@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { budgetApiService, type Budget } from '../services/budgetApi';
 import { useExpenses } from './useDashboardData';
-import { ALL_CATEGORIES, CORE_CATEGORIES } from '../config/categories';
+import { ALL_CATEGORIES } from '../config/categories';
 
 export interface BudgetCategory {
   id: string;

@@ -3,7 +3,6 @@
  */
 
 import { useState, useEffect } from 'react';
-import { apiService } from '../services/api';
 import { CORE_CATEGORIES, ADDITIONAL_CATEGORIES } from '../config/categories';
 
 export interface UserCategory {

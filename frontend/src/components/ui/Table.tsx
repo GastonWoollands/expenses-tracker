@@ -2,7 +2,6 @@
  * Table component for displaying data with sorting
  */
 
-import React, { useState } from 'react';
 import type { ReactNode } from 'react';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 

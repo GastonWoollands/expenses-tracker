@@ -29,7 +29,7 @@ const MOCK_BUDGET_DATA = {
     'bar-restaurant': 400,
     'hobby': 200,
     'other': 150
-  }
+  } as Record<string, number>
 };
 
 // Test budget calculations

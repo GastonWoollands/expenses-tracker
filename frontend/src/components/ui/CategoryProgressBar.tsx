@@ -17,7 +17,6 @@ const CategoryProgressBar: React.FC<CategoryProgressBarProps> = ({
 }) => {
   // Cap percentage at 150% for visual purposes
   const displayPercentage = Math.min(percentage, 150);
-  const cappedPercentage = Math.min(percentage, 100);
 
   const getBarColor = () => {
     if (isOverBudget) {
