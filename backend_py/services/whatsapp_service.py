@@ -15,6 +15,10 @@ from services.expense_service import ExpenseService
 from services.sheets_service import SheetsService
 from models.expense import ExpenseCreate
 
+# Import utility modules at module level for better performance
+from utils.audio_transcription import transcribe_audio_bytes
+from utils.llm_classifier import classify_expense as classify_expense_llm
+
 logger = logging.getLogger(__name__)
 
 # WhatsApp configuration
@@ -131,18 +135,6 @@ class WhatsAppService:
     async def transcribe_audio(self, audio_bytes: bytes, file_extension: str = ".ogg") -> str:
         """Transcribe audio using Whisper"""
         try:
-            # Import transcription from expenses_bot
-            import sys
-            from pathlib import Path
-            
-            # Add expenses_bot to path if needed
-            expenses_bot_path = Path(__file__).parent.parent.parent / "src" / "expenses_bot"
-            if str(expenses_bot_path) not in sys.path:
-                sys.path.insert(0, str(expenses_bot_path))
-            
-            # Import with full module path
-            from expenses_bot.transcription import transcribe_audio_bytes  # type: ignore
-            
             message_text = transcribe_audio_bytes(
                 audio_bytes,
                 language="es",
@@ -161,19 +153,7 @@ class WhatsAppService:
     async def classify_expense(self, text: str) -> Dict[str, Any]:
         """Classify expense using LLM"""
         try:
-            # Import LLM classification from expenses_bot
-            import sys
-            from pathlib import Path
-            
-            # Add expenses_bot to path if needed
-            expenses_bot_path = Path(__file__).parent.parent.parent / "src" / "expenses_bot"
-            if str(expenses_bot_path) not in sys.path:
-                sys.path.insert(0, str(expenses_bot_path))
-            
-            # Import with full module path
-            from expenses_bot.llm import classify_expense  # type: ignore
-            
-            result = classify_expense(text)
+            result = classify_expense_llm(text)
             return result
         except Exception as e:
             logger.error(f"Error classifying expense: {e}")
