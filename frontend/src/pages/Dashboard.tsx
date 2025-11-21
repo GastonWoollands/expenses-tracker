@@ -277,18 +277,6 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Current Month Expenses Table */}
-          <DataTable
-            data={sortedExpenses}
-            columns={expenseColumns}
-            onSort={handleSort}
-            sortKey={sortKey}
-            sortDirection={sortDirection}
-            title="Recent Transactions"
-            subtitle={`All expenses from ${getCurrentMonthName()} ${getCurrentYear()}`}
-            emptyMessage="No expenses recorded this month"
-          />
-
           {/* Expenses by Category & Monthly Totals */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
             {/* Expenses by Category */}
@@ -307,6 +295,18 @@ const Dashboard: React.FC = () => {
               emptyMessage="No monthly data available"
             />
           </div>
+
+          {/* Current Month Expenses Table */}
+          <DataTable
+            data={sortedExpenses}
+            columns={expenseColumns}
+            onSort={handleSort}
+            sortKey={sortKey}
+            sortDirection={sortDirection}
+            title="Recent Transactions"
+            subtitle={`All expenses from ${getCurrentMonthName()} ${getCurrentYear()}`}
+            emptyMessage="No expenses recorded this month"
+          />
         </div>
       </div>
     </ResponsiveContainer>

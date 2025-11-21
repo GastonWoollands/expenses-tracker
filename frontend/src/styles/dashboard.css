@@ -39,11 +39,11 @@ body {
 }
 
 /* Dark mode scrollbar */
-.dark ::-webkit-scrollbar-thumb {
+html.dark ::-webkit-scrollbar-thumb {
   background: rgba(75, 85, 99, 0.3);
 }
 
-.dark ::-webkit-scrollbar-thumb:hover {
+html.dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(75, 85, 99, 0.5);
 }
 
@@ -129,7 +129,7 @@ textarea:focus-visible {
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-.dark .card-hover:hover {
+html.dark .card-hover:hover {
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
 }
 
@@ -142,7 +142,7 @@ textarea:focus-visible {
   background-color: rgba(249, 250, 251, 0.8);
 }
 
-.dark .table-row-hover:hover {
+html.dark .table-row-hover:hover {
   background-color: rgba(31, 41, 55, 0.8);
 }
 
