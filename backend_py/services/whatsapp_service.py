@@ -364,16 +364,14 @@ class WhatsAppService:
             
             description = result.get("description") or message_text
             
-            # Normalize amount to float when possible
             try:
                 if isinstance(amount, str):
                     amount = float(amount.replace(",", "").strip())
             except Exception:
-                logger.warning(f"Could not parse amount: {amount}")
-                await self.send_whatsapp_reply(from_number, "Sorry, I couldn't extract the amount from your message.")
-                return
+                pass
             
             if amount is None:
+                logger.warning(f"Could not extract amount from message: {message_text}")
                 await self.send_whatsapp_reply(from_number, "Sorry, I couldn't extract the amount from your message.")
                 return
             
