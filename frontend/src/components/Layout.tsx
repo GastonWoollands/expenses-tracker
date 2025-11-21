@@ -45,16 +45,19 @@ const Layout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-200">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       {/* Mobile sidebar */}
       <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
-        <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-gray-900 shadow-xl">
-          <div className="flex h-16 items-center justify-between px-4">
-            <h1 className="text-xl font-bold text-gray-100">Expenses Tracker</h1>
+        <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shadow-xl">
+          <div className="flex h-16 items-center justify-between px-4 border-b border-slate-200 dark:border-slate-800">
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Guita</h1>
+              <ThemeToggle />
+            </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
             >
               <X className="h-6 w-6" />
             </button>
@@ -69,10 +72,10 @@ const Layout: React.FC = () => {
                     navigate(item.href);
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                  className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
                     isCurrentPath(item.href)
-                      ? 'bg-blue-950/40 text-blue-300'
-                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                      ? 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-l-2 border-blue-600 dark:border-blue-400'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'
                   }`}
                 >
                   <Icon className="mr-3 h-5 w-5" />
@@ -81,18 +84,18 @@ const Layout: React.FC = () => {
               );
             })}
           </nav>
-          <div className="border-t border-gray-800 p-4">
+          <div className="border-t border-slate-200 dark:border-slate-800 p-4 space-y-3">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <User className="h-8 w-8 text-gray-400" />
+                <User className="h-8 w-8 text-slate-500 dark:text-slate-400" />
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-300">{user?.email}</p>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{user?.email}</p>
               </div>
             </div>
             <button
               onClick={handleLogout}
-              className="mt-3 w-full flex items-center px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white rounded-md"
+              className="w-full flex items-center px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 rounded-md transition-colors duration-200"
             >
               <LogOut className="mr-3 h-5 w-5" />
               Sign out
@@ -103,9 +106,12 @@ const Layout: React.FC = () => {
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex flex-col flex-grow bg-gray-900 border-r border-gray-800">
-          <div className="flex h-16 items-center px-4">
-            <h1 className="text-xl font-bold text-gray-100">Expenses Tracker</h1>
+        <div className="flex flex-col flex-grow bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800">
+          <div className="flex h-16 items-center justify-between px-4 border-b border-slate-200 dark:border-slate-800">
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">Guita</h1>
+              <ThemeToggle />
+            </div>
           </div>
           <nav className="flex-1 px-4 py-4 space-y-1">
             {navigation.map((item) => {
@@ -114,10 +120,10 @@ const Layout: React.FC = () => {
                 <button
                   key={item.name}
                   onClick={() => navigate(item.href)}
-                  className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                  className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
                     isCurrentPath(item.href)
-                      ? 'bg-blue-950/40 text-blue-300'
-                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                      ? 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-l-2 border-blue-600 dark:border-blue-400'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'
                   }`}
                 >
                   <Icon className="mr-3 h-5 w-5" />
@@ -126,18 +132,18 @@ const Layout: React.FC = () => {
               );
             })}
           </nav>
-          <div className="border-t border-gray-800 p-4">
+          <div className="border-t border-slate-200 dark:border-slate-800 p-4 space-y-3">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <User className="h-8 w-8 text-gray-400" />
+                <User className="h-8 w-8 text-slate-500 dark:text-slate-400" />
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-300">{user?.email}</p>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{user?.email}</p>
               </div>
             </div>
             <button
               onClick={handleLogout}
-              className="mt-3 w-full flex items-center px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white rounded-md"
+              className="w-full flex items-center px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 rounded-md transition-colors duration-200"
             >
               <LogOut className="mr-3 h-5 w-5" />
               Sign out
@@ -148,20 +154,20 @@ const Layout: React.FC = () => {
 
       {/* Main content */}
       <div className="lg:pl-64">
-        <div className="sticky top-0 z-10 flex h-16 bg-gray-900 shadow lg:hidden">
+        <div className="sticky top-0 z-10 flex h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm lg:hidden">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="px-4 text-gray-300 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 lg:hidden"
+            className="px-4 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 lg:hidden transition-colors"
           >
             <Menu className="h-6 w-6" />
           </button>
           <div className="flex flex-1 items-center justify-center px-4">
-            <h1 className="text-lg font-semibold text-gray-100">
-              {navigation.find(item => isCurrentPath(item.href))?.name || 'Expenses Tracker'}
-            </h1>
-          </div>
-          <div className="px-2">
-            <ThemeToggle />
+            <div className="flex items-center gap-3">
+              <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                {navigation.find(item => isCurrentPath(item.href))?.name || 'Guita'}
+              </h1>
+              <ThemeToggle />
+            </div>
           </div>
         </div>
 

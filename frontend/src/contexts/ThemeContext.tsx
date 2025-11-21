@@ -2,7 +2,7 @@
  * Simple theme context with dark/light/system and localStorage persistence
  */
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -24,38 +24,61 @@ function getSystemPrefersDark(): boolean {
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
-    const stored = typeof window !== 'undefined' ? (localStorage.getItem(STORAGE_KEY) as Theme | null) : null;
+    if (typeof window === 'undefined') return 'dark';
+    const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
     return stored ?? 'dark';
   });
 
   const resolvedTheme = useMemo<'light' | 'dark'>(() => {
-    if (theme === 'system') return getSystemPrefersDark() ? 'dark' : 'light';
+    if (theme === 'system') {
+      return getSystemPrefersDark() ? 'dark' : 'light';
+    }
     return theme;
   }, [theme]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
+    
     const root = document.documentElement;
+    
+    console.log('Theme effect running:', { theme, resolvedTheme, hasDarkClass: root.classList.contains('dark') });
+    
     if (resolvedTheme === 'dark') {
       root.classList.add('dark');
+      console.log('Added dark class');
     } else {
       root.classList.remove('dark');
+      console.log('Removed dark class');
     }
-  }, [resolvedTheme]);
+    
+    // Update theme-color meta tag for PWA
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeColorMeta) {
+      themeColorMeta.setAttribute('content', resolvedTheme === 'dark' ? '#0f172a' : '#f8fafc');
+    }
+  }, [resolvedTheme, theme]);
 
-  const setTheme = (t: Theme) => {
+  const setTheme = useCallback((t: Theme) => {
+    console.log('setTheme called with:', t);
     setThemeState(t);
-    if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, t);
-  };
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, t);
+      console.log('Saved to localStorage:', t);
+    }
+  }, []);
 
-  const toggle = () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
+  const toggle = useCallback(() => {
+    const newTheme = resolvedTheme === 'dark' ? 'light' : 'dark';
+    console.log('Theme toggle:', { current: resolvedTheme, new: newTheme, theme });
+    setTheme(newTheme);
+  }, [resolvedTheme, theme, setTheme]);
 
-  const value: ThemeContextValue = {
+  const value: ThemeContextValue = useMemo(() => ({
     theme,
     resolvedTheme,
     setTheme,
     toggle,
-  };
+  }), [theme, resolvedTheme, setTheme, toggle]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 };

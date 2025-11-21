@@ -10,9 +10,10 @@
     <meta name="description" content="Guita - Track and manage your expenses" />
     <meta name="application-name" content="Guita" />
     
-    <!-- Theme Color -->
-    <meta name="theme-color" content="#ffffff" />
-    <meta name="msapplication-TileColor" content="#ffffff" />
+    <!-- Theme Color (will be updated dynamically by theme context) -->
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
+    <meta name="msapplication-TileColor" content="#0f172a" />
     
     <!-- Icons -->
     <link rel="icon" type="image/png" href="/logo.png" />
@@ -35,6 +36,25 @@
     <meta name="format-detection" content="telephone=no" />
   </head>
   <body>
+    <script>
+      // Set theme class immediately to prevent flash of wrong theme
+      (function() {
+        try {
+          const theme = localStorage.getItem('app-theme') || 'dark';
+          const resolvedTheme = theme === 'system' 
+            ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            : theme;
+          if (resolvedTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {
+          // Fallback to dark if there's any error
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
