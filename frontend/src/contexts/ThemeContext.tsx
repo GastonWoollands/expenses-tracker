@@ -39,39 +39,37 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (typeof document === 'undefined') return;
     
-    const root = document.documentElement;
+    const html = document.documentElement;
     
-    console.log('Theme effect running:', { theme, resolvedTheme, hasDarkClass: root.classList.contains('dark') });
+    // Remove dark class first
+    html.classList.remove('dark');
     
+    // Add dark class if needed
     if (resolvedTheme === 'dark') {
-      root.classList.add('dark');
-      console.log('Added dark class');
-    } else {
-      root.classList.remove('dark');
-      console.log('Removed dark class');
+      html.classList.add('dark');
     }
+    
+    // Force a reflow to ensure styles are applied
+    void html.offsetHeight;
     
     // Update theme-color meta tag for PWA
     const themeColorMeta = document.querySelector('meta[name="theme-color"]');
     if (themeColorMeta) {
       themeColorMeta.setAttribute('content', resolvedTheme === 'dark' ? '#0f172a' : '#f8fafc');
     }
-  }, [resolvedTheme, theme]);
+  }, [resolvedTheme]);
 
   const setTheme = useCallback((t: Theme) => {
-    console.log('setTheme called with:', t);
     setThemeState(t);
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEY, t);
-      console.log('Saved to localStorage:', t);
     }
   }, []);
 
   const toggle = useCallback(() => {
     const newTheme = resolvedTheme === 'dark' ? 'light' : 'dark';
-    console.log('Theme toggle:', { current: resolvedTheme, new: newTheme, theme });
     setTheme(newTheme);
-  }, [resolvedTheme, theme, setTheme]);
+  }, [resolvedTheme, setTheme]);
 
   const value: ThemeContextValue = useMemo(() => ({
     theme,

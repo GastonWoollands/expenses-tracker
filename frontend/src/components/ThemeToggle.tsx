@@ -13,7 +13,6 @@ const ThemeToggle: React.FC = () => {
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('ThemeToggle clicked, current theme:', resolvedTheme);
     toggle();
   };
 
