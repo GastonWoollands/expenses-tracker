@@ -1,23 +1,29 @@
 /**
- * Dashboard: Minimalist, responsive expense overview
+ * Dashboard:
  * Mobile-first design with elegant interactions
  */
 
 import React, { useState } from 'react';
-import { ResponsiveContainer, Heading, MetricCard, DataTable, CategoryBar } from '../components';
+import { ResponsiveContainer, Heading, MetricCard, DataTable, CategoryBar, EditExpenseModal, Toast } from '../components';
 import type { Column, SortDirection } from '../components/ui/DataTable';
-import { useCurrentMonthExpenses, useExpenseSummary, useMonthlyTotals } from '../hooks/useDashboardData';
+import { useCurrentMonthExpenses, useExpenseSummary, useMonthlyTotals, useExpenses } from '../hooks/useDashboardData';
 import { formatCurrency, formatDateShort, getCurrentMonthName, getCurrentYear, calculatePercentage, sortByKey, getPreviousMonth, calculateTrendPercentage } from '../utils/formatters';
-import { TrendingUp, TrendingDown } from 'lucide-react';
-import type { Expense } from '../services/api';
+import { TrendingUp, TrendingDown, Edit2, Trash2 } from 'lucide-react';
+import type { Expense, ExpenseUpdate } from '../services/api';
+import { apiService } from '../services/api';
 
 const Dashboard: React.FC = () => {
-  const { expenses: currentMonthExpenses, loading: expensesLoading, error: expensesError } = useCurrentMonthExpenses();
+  // Use hooks - refetch the one that actually provides the displayed data
+  const { expenses: currentMonthExpenses, loading: expensesLoading, error: expensesError, refetch: refetchCurrentMonth } = useCurrentMonthExpenses();
   const { summary, loading: summaryLoading } = useExpenseSummary();
   const { monthlyTotals, loading: totalsLoading } = useMonthlyTotals();
+  // Get refetch for all expenses (used by monthly totals)
+  const { refetch: refetchAllExpenses } = useExpenses();
   
   const [sortKey, setSortKey] = useState<keyof Expense | undefined>(undefined);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
 
   // Debug logging
   console.log('Dashboard state:', {
@@ -31,6 +37,59 @@ const Dashboard: React.FC = () => {
   const handleSort = (key: keyof Expense, direction: SortDirection) => {
     setSortKey(direction ? key : undefined);
     setSortDirection(direction);
+  };
+
+  const handleEdit = (expense: Expense) => {
+    setEditingExpense(expense);
+  };
+
+  const handleDelete = async (expense: Expense) => {
+    // Confirmación simple del navegador
+    if (!window.confirm(`Are you sure you want to delete "${expense.description}"?`)) {
+      return;
+    }
+
+    try {
+      // Delete the expense directly
+      await apiService.deleteExpense(expense.id);
+      
+      // Refetch expenses to update the dashboard (same as edit)
+      await Promise.all([
+        refetchCurrentMonth().catch(() => {}),
+        refetchAllExpenses().catch(() => {})
+      ]);
+      
+      setToast({ message: 'Expense deleted successfully', type: 'success' });
+    } catch (error: any) {
+      console.error('Error deleting expense:', error);
+      setToast({ 
+        message: error?.message || 'Failed to delete expense. Please try again.', 
+        type: 'error' 
+      });
+    }
+  };
+
+  const handleSaveEdit = async (id: string, updates: ExpenseUpdate) => {
+    try {
+      // Update the expense
+      await apiService.updateExpense(id, updates);
+      
+      // Refetch expenses to update the dashboard
+      await Promise.all([
+        refetchCurrentMonth().catch(() => {}),
+        refetchAllExpenses().catch(() => {})
+      ]);
+      
+      setEditingExpense(null);
+      setToast({ message: 'Expense updated successfully', type: 'success' });
+    } catch (error: any) {
+      console.error('Error updating expense:', error);
+      setToast({ 
+        message: error?.message || 'Failed to update expense. Please try again.', 
+        type: 'error' 
+      });
+      throw error; // Re-throw to let the modal handle it
+    }
   };
 
   const sortedExpenses = sortKey && sortDirection 
@@ -121,6 +180,36 @@ const Dashboard: React.FC = () => {
         </span>
       ),
       className: 'text-right w-20 sm:w-24'
+    },
+    {
+      key: 'id' as keyof Expense,
+      label: 'Actions',
+      sortable: false,
+      render: (_value: any, item: Expense) => (
+        <div className="flex items-center gap-2 justify-end">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEdit(item);
+            }}
+            className="p-1.5 text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+            title="Edit expense"
+          >
+            <Edit2 className="h-4 w-4" />
+          </button>
+          <button
+            onClick={async (e) => {
+              e.stopPropagation();
+              await handleDelete(item);
+            }}
+            className="p-1.5 text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+            title="Delete expense"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      ),
+      className: 'w-24 text-right'
     }
   ];
 
@@ -306,9 +395,50 @@ const Dashboard: React.FC = () => {
             title="Recent Transactions"
             subtitle={`All expenses from ${getCurrentMonthName()} ${getCurrentYear()}`}
             emptyMessage="No expenses recorded this month"
+            renderMobileActions={(item) => (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEdit(item);
+                  }}
+                  className="px-3 py-1.5 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center gap-1.5"
+                >
+                  <Edit2 className="h-4 w-4" />
+                  Edit
+                </button>
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    await handleDelete(item);
+                  }}
+                  className="px-3 py-1.5 text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-1.5"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </button>
+              </>
+            )}
           />
         </div>
       </div>
+
+      {/* Edit Expense Modal */}
+      <EditExpenseModal
+        expense={editingExpense}
+        isOpen={!!editingExpense}
+        onClose={() => setEditingExpense(null)}
+        onSave={handleSaveEdit}
+      />
+
+      {/* Toast Notifications */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </ResponsiveContainer>
   );
 };

@@ -123,16 +123,32 @@ class ApiService {
   }
 
   async updateExpense(id: string, expense: ExpenseUpdate): Promise<Expense> {
-    return this.request(`/expenses/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(expense),
-    });
+    console.log('API: updateExpense called with:', { id, expense });
+    try {
+      const result = await this.request<Expense>(`/expenses/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(expense),
+      });
+      console.log('API: updateExpense success:', result);
+      return result;
+    } catch (error) {
+      console.error('API: updateExpense error:', error);
+      throw error;
+    }
   }
 
   async deleteExpense(id: string): Promise<{ message: string }> {
-    return this.request(`/expenses/${id}`, {
-      method: 'DELETE',
-    });
+    console.log('API: deleteExpense called with id:', id);
+    try {
+      const result = await this.request<{ message: string }>(`/expenses/${id}`, {
+        method: 'DELETE',
+      });
+      console.log('API: deleteExpense success:', result);
+      return result;
+    } catch (error) {
+      console.error('API: deleteExpense error:', error);
+      throw error;
+    }
   }
 
   // Analytics

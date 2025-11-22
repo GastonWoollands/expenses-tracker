@@ -27,6 +27,7 @@ interface DataTableProps<T> {
   emptyMessage?: string;
   title?: string;
   subtitle?: string;
+  renderMobileActions?: (item: T, index: number) => ReactNode;
 }
 
 function DataTable<T extends Record<string, any>>({
@@ -38,7 +39,8 @@ function DataTable<T extends Record<string, any>>({
   className = '',
   emptyMessage = 'No data available',
   title,
-  subtitle
+  subtitle,
+  renderMobileActions
 }: DataTableProps<T>) {
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
@@ -177,19 +179,28 @@ function DataTable<T extends Record<string, any>>({
             {expandedRows.has(index) && (
               <div className="px-4 pb-3 bg-gray-50 dark:bg-gray-800">
                 <div className="space-y-2">
-                  {visibleColumns.slice(2).concat(hiddenColumns).map((column) => (
-                    <div key={String(column.key)}>
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                        {column.label}
-                      </span>
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        {column.render 
-                          ? column.render(item[column.key], item)
-                          : String(item[column.key] || '-')
-                        }
+                  {visibleColumns.slice(2).concat(hiddenColumns)
+                    .filter(column => column.label !== 'Actions')
+                    .map((column) => (
+                      <div key={String(column.key)}>
+                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                          {column.label}
+                        </span>
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          {column.render 
+                            ? column.render(item[column.key], item)
+                            : String(item[column.key] || '-')
+                          }
+                        </div>
+                      </div>
+                    ))}
+                  {renderMobileActions && (
+                    <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex gap-2 justify-end">
+                        {renderMobileActions(item, index)}
                       </div>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             )}

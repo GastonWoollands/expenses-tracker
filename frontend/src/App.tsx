@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { Login, Register, Dashboard, Expenses, Budget, Analytics } from './pages';
 import { Layout, LoadingSpinner } from './components';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -72,10 +73,10 @@ const AppRoutes: React.FC = () => {
               }
             >
               <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="expenses" element={<Expenses />} />
-              <Route path="budget" element={<Budget />} />
-              <Route path="analytics" element={<Analytics />} />
+              <Route path="dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+              <Route path="expenses" element={<ErrorBoundary><Expenses /></ErrorBoundary>} />
+              <Route path="budget" element={<ErrorBoundary><Budget /></ErrorBoundary>} />
+              <Route path="analytics" element={<ErrorBoundary><Analytics /></ErrorBoundary>} />
             </Route>
 
             {/* Catch all route */}

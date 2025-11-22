@@ -30,3 +30,6 @@ export { default as MonthlyBudgetOverview } from './ui/MonthlyBudgetOverview';
 
 // Toast Component
 export { default as Toast } from './ui/Toast';
+
+// Modal Components
+export { default as EditExpenseModal } from './ui/EditExpenseModal';
