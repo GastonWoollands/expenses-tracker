@@ -20,21 +20,21 @@ const CategoryProgressBar: React.FC<CategoryProgressBarProps> = ({
 
   const getBarColor = () => {
     if (isOverBudget) {
-      return 'bg-red-500';
+      return 'bg-red-600/80';
     } else if (percentage > 80) {
-      return 'bg-yellow-500';
+      return 'bg-amber-600/80';
     } else {
-      return 'bg-green-500';
+      return 'bg-emerald-600/80';
     }
   };
 
   const getBackgroundColor = () => {
     if (isOverBudget) {
-      return 'bg-red-100 dark:bg-red-900/20';
+      return 'bg-red-50 dark:bg-red-900/20';
     } else if (percentage > 80) {
-      return 'bg-yellow-100 dark:bg-yellow-900/20';
+      return 'bg-amber-50 dark:bg-amber-900/20';
     } else {
-      return 'bg-green-100 dark:bg-green-900/20';
+      return 'bg-emerald-50 dark:bg-emerald-900/20';
     }
   };
 
@@ -60,7 +60,7 @@ const CategoryProgressBar: React.FC<CategoryProgressBarProps> = ({
       {/* Percentage text */}
       <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 text-right">
         {percentage > 100 && (
-          <span className="text-red-600 dark:text-red-400 font-medium">
+        <span className="text-red-600 dark:text-red-300 font-medium">
             {percentage.toFixed(0)}% used
           </span>
         )}

@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { budgetApiService, type Budget } from '../services/budgetApi';
 import { useExpenses } from './useDashboardData';
-import { ALL_CATEGORIES } from '../config/categories';
+import { ALL_CATEGORIES, getCategoryKeyFromName } from '../config/categories';
 
 export interface BudgetCategory {
   id: string;
@@ -92,7 +92,8 @@ export function useBudgetData() {
     // Calculate category spending
     const categorySpending: Record<string, number> = {};
     currentMonthExpenses.forEach(expense => {
-      const categoryKey = expense.category.toLowerCase().replace(/\s+/g, '-');
+      // Map human-readable category name from expenses to a stable key
+      const categoryKey = getCategoryKeyFromName(expense.category);
       categorySpending[categoryKey] = (categorySpending[categoryKey] || 0) + expense.amount;
     });
 

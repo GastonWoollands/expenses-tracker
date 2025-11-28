@@ -5,6 +5,7 @@ Budget service for managing budgets
 from typing import List, Optional, Dict, Any
 from database.neon_client import get_neon
 from models.budget import Budget, BudgetCreate, BudgetUpdate
+from config.categories import CATEGORIES
 from datetime import datetime
 import uuid
 import logging
@@ -31,9 +32,14 @@ class BudgetService:
         budgets = []
         
         for row in results:
-            # Map category_id to category_key (simplified - using category name as key)
+            # Map category_id/category_name to a stable category_key using config
             category_name = row.get("category_name", "other")
-            category_key = category_name.lower().replace(" ", "_")
+            # Try to find a matching key from backend category config by name
+            category_key = next(
+                (key for key, cat in CATEGORIES.items() if cat.name == category_name),
+                # Fallback to a normalized version of the name to avoid crashes
+                category_name.lower().replace(" ", "_")
+            )
             
             budgets.append(Budget(
                 id=str(row["id"]),
@@ -95,7 +101,10 @@ class BudgetService:
             is_over_budget = spent_amount > budget_amount
             
             category_name = row.get("category_name", "other")
-            category_key = category_name.lower().replace(" ", "_")
+            category_key = next(
+                (key for key, cat in CATEGORIES.items() if cat.name == category_name),
+                category_name.lower().replace(" ", "_")
+            )
             
             budgets_with_expenses.append({
                 "id": str(row["id"]),
@@ -238,10 +247,31 @@ class BudgetService:
         return result is not None
     
     async def _get_category_id_by_key(self, category_key: str, user_id: str) -> Optional[str]:
-        """Get category ID by key/name"""
-        # Try to find category by name (matching key)
+        """Get category ID by stable key, falling back to name heuristics.
+
+        This uses the shared backend category config so that keys like
+        'bar_restaurant' reliably map to the DB category named
+        'Bar and restaurant', instead of relying on fragile string
+        transformations.
+        """
+        # First, try to resolve via the canonical config (for built‑in categories)
+        category_info = CATEGORIES.get(category_key)
+        if category_info:
+            category = await self.neon.fetchrow(
+                """
+                SELECT id FROM categories
+                WHERE name = $1 AND (user_id = $2 OR user_id IS NULL)
+                LIMIT 1
+                """,
+                category_info.name,
+                user_id,
+            )
+            if category:
+                return str(category["id"])
+
+        # Fallback: previous heuristic for any custom / user-defined categories
         category_name = category_key.replace("_", " ").title()
-        
+
         category = await self.neon.fetchrow(
             """
             SELECT id FROM categories
@@ -250,12 +280,12 @@ class BudgetService:
             """,
             category_key,
             category_name,
-            user_id
+            user_id,
         )
-        
+
         if category:
             return str(category["id"])
-        
+
         return None
     
     async def get_user_income(self, user_id: str) -> Dict[str, Any]:

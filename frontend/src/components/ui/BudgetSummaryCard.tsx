@@ -134,8 +134,8 @@ const BudgetSummaryCard: React.FC<BudgetSummaryCardProps> = ({
         isOverBudget 
           ? 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10' 
           : isNearBudget 
-            ? 'border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/10'
-            : 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10'
+            ? 'border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10'
+            : 'border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/10'
       }`}>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -144,10 +144,10 @@ const BudgetSummaryCard: React.FC<BudgetSummaryCardProps> = ({
             </h3>
             <div className={`inline-flex items-center text-xs font-semibold px-2 py-1 rounded-full ${
               isOverBudget
-                ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                ? 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300'
                 : isNearBudget
-                  ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-                  : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                  ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                  : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
             }`}>
               {isOverBudget ? (
                 <>
@@ -171,10 +171,10 @@ const BudgetSummaryCard: React.FC<BudgetSummaryCardProps> = ({
           <div className="space-y-1">
             <div className={`text-2xl font-bold tracking-tight ${
               isOverBudget
-                ? 'text-red-600 dark:text-red-400'
+                ? 'text-red-600 dark:text-red-300'
                 : isNearBudget
-                  ? 'text-yellow-600 dark:text-yellow-400'
-                  : 'text-green-600 dark:text-green-400'
+                  ? 'text-amber-600 dark:text-amber-300'
+                  : 'text-emerald-600 dark:text-emerald-300'
             }`}>
               {formatCurrency(remainingBalance)}
             </div>

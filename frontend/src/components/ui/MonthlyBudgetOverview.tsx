@@ -32,10 +32,10 @@ const MonthlyBudgetOverview: React.FC<MonthlyBudgetOverviewProps> = ({
           </Heading>
           <div className={`inline-flex items-center text-xs font-semibold px-2 py-1 rounded-full ${
             isOverBudget
-              ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+              ? 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300'
               : isNearBudget
-                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-                : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
           }`}>
             {isOverBudget ? (
               <>
@@ -84,10 +84,10 @@ const MonthlyBudgetOverview: React.FC<MonthlyBudgetOverviewProps> = ({
             </div>
             <div className={`text-xl font-bold ${
               isOverBudget
-                ? 'text-red-600 dark:text-red-400'
+                ? 'text-red-600 dark:text-red-300'
                 : isNearBudget
-                  ? 'text-yellow-600 dark:text-yellow-400'
-                  : 'text-green-600 dark:text-green-400'
+                  ? 'text-amber-600 dark:text-amber-300'
+                  : 'text-emerald-600 dark:text-emerald-300'
             }`}>
               {formatCurrency(Math.abs(difference))}
             </div>
@@ -102,10 +102,10 @@ const MonthlyBudgetOverview: React.FC<MonthlyBudgetOverviewProps> = ({
             </span>
             <span className={`font-medium ${
               isOverBudget
-                ? 'text-red-600 dark:text-red-400'
+                ? 'text-red-600 dark:text-red-300'
                 : isNearBudget
-                  ? 'text-yellow-600 dark:text-yellow-400'
-                  : 'text-green-600 dark:text-green-400'
+                  ? 'text-amber-600 dark:text-amber-300'
+                  : 'text-emerald-600 dark:text-emerald-300'
             }`}>
               {budgetUtilization.toFixed(1)}%
             </span>
@@ -115,10 +115,10 @@ const MonthlyBudgetOverview: React.FC<MonthlyBudgetOverviewProps> = ({
             <div
               className={`h-full transition-all duration-500 ease-out ${
                 isOverBudget
-                  ? 'bg-red-500'
+                  ? 'bg-red-600/80'
                   : isNearBudget
-                    ? 'bg-yellow-500'
-                    : 'bg-green-500'
+                    ? 'bg-amber-600/80'
+                    : 'bg-emerald-600/80'
               }`}
               style={{ width: `${Math.min(budgetUtilization, 100)}%` }}
             />
@@ -139,10 +139,10 @@ const MonthlyBudgetOverview: React.FC<MonthlyBudgetOverviewProps> = ({
         <div className="text-center">
           <p className={`text-sm ${
             isOverBudget
-              ? 'text-red-600 dark:text-red-400'
+              ? 'text-red-600 dark:text-red-300'
               : isNearBudget
-                ? 'text-yellow-600 dark:text-yellow-400'
-                : 'text-green-600 dark:text-green-400'
+                ? 'text-amber-600 dark:text-amber-300'
+                : 'text-emerald-600 dark:text-emerald-300'
           }`}>
             {isOverBudget ? (
               `You've exceeded your budget by ${formatCurrency(Math.abs(difference))}`

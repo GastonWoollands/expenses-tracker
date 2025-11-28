@@ -70,4 +70,26 @@ export const DEFAULT_CATEGORIES: ExpenseCategory[] = CORE_CATEGORIES;
 export const CATEGORY_KEYS = DEFAULT_CATEGORIES.map(c => c.key);
 export const CATEGORY_IDS = DEFAULT_CATEGORIES.map(c => c.id);
 
+/**
+ * Map a human-readable category name (as stored with expenses, e.g.
+ * "Bar and restaurant") to the stable category key (e.g. "bar_restaurant").
+ *
+ * This keeps the frontend in sync with the backend category config and
+ * avoids ad‑hoc string replacements that can easily drift.
+ */
+export function getCategoryKeyFromName(name: string): string {
+  // Exact label match first
+  const match = ALL_CATEGORIES.find(
+    (cat) => cat.label.toLowerCase() === name.toLowerCase()
+  );
+  if (match) return match.key;
+
+  // Fallback: best-effort normalization (kept for robustness)
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/\s+and\s+/g, '_and_')
+    .replace(/\s+/g, '_');
+}
+
 

@@ -91,11 +91,11 @@ const BudgetCategoryTable: React.FC<BudgetCategoryTableProps> = ({
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className={`w-3 h-3 rounded-full mr-3 ${
-                        category.isOverBudget 
-                          ? 'bg-red-500' 
-                          : category.percentageUsed > 80 
-                            ? 'bg-yellow-500' 
-                            : 'bg-green-500'
+                        category.isOverBudget
+                          ? 'bg-red-600/80'
+                          : category.percentageUsed > 80
+                            ? 'bg-amber-600/80'
+                            : 'bg-emerald-600/80'
                       }`} />
                       <div className="text-sm font-medium text-gray-900 dark:text-white">
                         {category.name}
@@ -110,7 +110,7 @@ const BudgetCategoryTable: React.FC<BudgetCategoryTableProps> = ({
                           step="0.01"
                           min="0"
                           defaultValue={category.budget}
-                          className="w-24 text-sm"
+                          className="w-28 text-sm"
                           onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                             if (e.key === 'Enter') {
                               const amount = parseFloat((e.target as HTMLInputElement).value);
@@ -126,17 +126,16 @@ const BudgetCategoryTable: React.FC<BudgetCategoryTableProps> = ({
                         <Button
                           onClick={() => {
                             // Find the input field in the same row
-                            const input = document.querySelector(`tr[data-category="${category.id}"] input[type="number"]`) as HTMLInputElement;
+                            const input = document.querySelector(
+                              `tr[data-category="${category.id}"] input[type="number"]`
+                            ) as HTMLInputElement;
                             const amount = parseFloat(input?.value || category.budget.toString());
-                            console.log('Save button clicked:', { categoryId: category.id, amount, inputValue: input?.value });
                             if (!isNaN(amount) && amount >= 0) {
-                              console.log('Calling onSaveCategory with:', category.id, amount);
                               onSaveCategory(category.id, amount);
-                            } else {
-                              console.log('Invalid amount:', amount);
                             }
                           }}
                           className="p-1 bg-green-600 hover:bg-green-700 text-white"
+                          title="Save budget"
                         >
                           <Check className="w-3 h-3" />
                         </Button>
@@ -144,14 +143,19 @@ const BudgetCategoryTable: React.FC<BudgetCategoryTableProps> = ({
                           onClick={onCancelEdit}
                           variant="secondary"
                           className="p-1"
+                          title="Cancel"
                         >
                           <X className="w-3 h-3" />
                         </Button>
                       </div>
                     ) : (
-                      <div className="text-sm text-gray-900 dark:text-white">
+                      <button
+                        type="button"
+                        onClick={() => onEditCategory(category.id)}
+                        className="text-sm text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                      >
                         {formatCurrency(category.budget)}
-                      </div>
+                      </button>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -162,10 +166,10 @@ const BudgetCategoryTable: React.FC<BudgetCategoryTableProps> = ({
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className={`text-sm font-medium ${
                       category.isOverBudget
-                        ? 'text-red-600 dark:text-red-400'
+                        ? 'text-red-600 dark:text-red-300'
                         : category.percentageUsed > 80
-                          ? 'text-yellow-600 dark:text-yellow-400'
-                          : 'text-green-600 dark:text-green-400'
+                          ? 'text-amber-600 dark:text-amber-300'
+                          : 'text-emerald-600 dark:text-emerald-300'
                     }`}>
                       {category.percentageUsed.toFixed(1)}%
                     </div>
@@ -200,11 +204,11 @@ const BudgetCategoryTable: React.FC<BudgetCategoryTableProps> = ({
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center">
                 <div className={`w-3 h-3 rounded-full mr-3 ${
-                  category.isOverBudget 
-                    ? 'bg-red-500' 
-                    : category.percentageUsed > 80 
-                      ? 'bg-yellow-500' 
-                      : 'bg-green-500'
+                  category.isOverBudget
+                    ? 'bg-red-600/80'
+                    : category.percentageUsed > 80
+                      ? 'bg-amber-600/80'
+                      : 'bg-emerald-600/80'
                 }`} />
                 <h3 className="text-sm font-medium text-gray-900 dark:text-white">
                   {category.name}
@@ -230,7 +234,8 @@ const BudgetCategoryTable: React.FC<BudgetCategoryTableProps> = ({
                       step="0.01"
                       min="0"
                       defaultValue={category.budget}
-                      className="w-20 text-sm"
+                      className="w-24 text-sm text-right"
+                      data-category={category.id}
                       onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                         if (e.key === 'Enter') {
                           const amount = parseFloat((e.target as HTMLInputElement).value);
@@ -281,10 +286,10 @@ const BudgetCategoryTable: React.FC<BudgetCategoryTableProps> = ({
                 <span className="text-gray-600 dark:text-gray-400">% Used:</span>
                 <span className={`font-medium ${
                   category.isOverBudget
-                    ? 'text-red-600 dark:text-red-400'
+                    ? 'text-red-600 dark:text-red-300'
                     : category.percentageUsed > 80
-                      ? 'text-yellow-600 dark:text-yellow-400'
-                      : 'text-green-600 dark:text-green-400'
+                      ? 'text-amber-600 dark:text-amber-300'
+                      : 'text-emerald-600 dark:text-emerald-300'
                 }`}>
                   {category.percentageUsed.toFixed(1)}%
                 </span>
