@@ -1,10 +1,9 @@
 /**
  * Dashboard:
- * Mobile-first design with elegant interactions
  */
 
 import React, { useState } from 'react';
-import { ResponsiveContainer, Heading, MetricCard, DataTable, CategoryBar, EditExpenseModal, Toast } from '../components';
+import { ResponsiveContainer, Heading, MetricCard, DataTable, CategoryBar, EditExpenseModal, Toast, TrueLayerIntegration } from '../components';
 import type { Column, SortDirection } from '../components/ui/DataTable';
 import { useCurrentMonthExpenses, useExpenseSummary, useMonthlyTotals, useExpenses } from '../hooks/useDashboardData';
 import { formatCurrency, formatDateShort, getCurrentMonthName, getCurrentYear, calculatePercentage, sortByKey, getPreviousMonth, calculateTrendPercentage } from '../utils/formatters';
@@ -365,6 +364,15 @@ const Dashboard: React.FC = () => {
               />
             </div>
           </div>
+
+          {/* Bank Integration */}
+          <TrueLayerIntegration
+            onSyncComplete={() => {
+              refetchCurrentMonth().catch(() => {});
+              refetchAllExpenses().catch(() => {});
+              setToast({ message: 'Transactions synced successfully', type: 'success' });
+            }}
+          />
 
           {/* Expenses by Category & Monthly Totals */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">

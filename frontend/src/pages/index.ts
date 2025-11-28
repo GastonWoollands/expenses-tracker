@@ -8,3 +8,4 @@ export { default as Budget } from './Budget';
 export { default as Analytics } from './Analytics';
 export { default as Login } from './Login';
 export { default as Register } from './Register';
+export { default as TrueLayerCallback } from './TrueLayerCallback';

@@ -6,7 +6,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { Login, Register, Dashboard, Expenses, Budget, Analytics } from './pages';
+import { Login, Register, Dashboard, Expenses, Budget, Analytics, TrueLayerCallback } from './pages';
 import { Layout, LoadingSpinner } from './components';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -77,6 +77,7 @@ const AppRoutes: React.FC = () => {
               <Route path="expenses" element={<ErrorBoundary><Expenses /></ErrorBoundary>} />
               <Route path="budget" element={<ErrorBoundary><Budget /></ErrorBoundary>} />
               <Route path="analytics" element={<ErrorBoundary><Analytics /></ErrorBoundary>} />
+              <Route path="truelayer/callback" element={<ErrorBoundary><TrueLayerCallback /></ErrorBoundary>} />
             </Route>
 
             {/* Catch all route */}

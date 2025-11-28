@@ -33,3 +33,6 @@ export { default as Toast } from './ui/Toast';
 
 // Modal Components
 export { default as EditExpenseModal } from './ui/EditExpenseModal';
+
+// Integration Components
+export { default as TrueLayerIntegration } from './ui/TrueLayerIntegration';

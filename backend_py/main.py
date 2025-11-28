@@ -32,6 +32,7 @@ from services.expense_service import ExpenseService
 from services.sheets_service import SheetsService
 from services.llm_service import LLMService
 from services.category_service import category_service
+from services.truelayer_service import TrueLayerService
 from models.expense import Expense, ExpenseCreate, ExpenseUpdate
 from models.user import User, UserUpdate
 from routers.budget import router as budget_router
@@ -67,6 +68,7 @@ security = HTTPBearer()
 expense_service = ExpenseService()
 sheets_service = SheetsService()
 llm_service = LLMService()
+truelayer_service = TrueLayerService()
 
 # Include routers
 app.include_router(budget_router, prefix="/api/v1", tags=["budgets"])
@@ -474,6 +476,295 @@ async def create_fixed_expense(
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# TrueLayer endpoints
+@app.get("/api/truelayer/auth/link")
+async def get_truelayer_auth_link(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get TrueLayer OAuth authorization URL
+    
+    Workflow:
+    1. Backend generates OAuth URL with state=user_id
+    2. Frontend redirects user to this URL
+    3. User logs in at TrueLayer and selects their bank (sandbox or live)
+       - This happens on TrueLayer's page, NOT in our frontend
+       - TrueLayer handles the bank selection internally
+    4. TrueLayer redirects to /truelayer/callback with code and state
+    5. Backend exchanges code for tokens and saves them
+    6. Frontend can then list accounts and transactions (but NOT banks)
+    
+    IMPORTANT: The frontend NEVER calls login-api.truelayer-sandbox.com/providers.
+    Bank selection is handled entirely by TrueLayer during the OAuth flow.
+    """
+    try:
+        auth_url = truelayer_service.get_auth_url(state=current_user.uid)
+        logger.info(f"Generated OAuth URL for user {current_user.uid[:10]}...")
+        return {"auth_url": auth_url}
+    except Exception as e:
+        logger.error(f"Error generating auth link: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/truelayer/callback")
+async def truelayer_callback(
+    code: Optional[str] = None,
+    error: Optional[str] = None,
+    state: Optional[str] = None
+):
+    """
+    Handle TrueLayer OAuth callback
+    
+    This endpoint receives the redirect from TrueLayer after:
+    1. User logged in at TrueLayer
+    2. User selected their bank (handled by TrueLayer, not our frontend)
+    3. User authorized our app
+    
+    Flow:
+    - TrueLayer redirects here with code and state (user_id)
+    - Backend exchanges code for tokens using client_secret
+    - Tokens are saved to database
+    - Backend redirects to frontend with success/error
+    
+    IMPORTANT: 
+    - This endpoint does NOT require authentication (TrueLayer redirects without token)
+    - The state parameter contains the user_id (Firebase UID)
+    - Bank selection happens on TrueLayer's side, not here
+    """
+    from fastapi.responses import HTMLResponse
+    
+    # Get frontend URL for redirect
+    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+    
+    if error:
+        logger.error(f"TrueLayer callback error: {error}")
+        # Return HTML that redirects to frontend with error
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta http-equiv="refresh" content="2;url={frontend_url}/truelayer/callback?error={error}">
+            <title>TrueLayer Authorization</title>
+        </head>
+        <body>
+            <p>Authorization failed: {error}</p>
+            <p>Redirecting...</p>
+        </body>
+        </html>
+        """
+        return HTMLResponse(content=html_content, status_code=200)
+    
+    if not code:
+        logger.error("TrueLayer callback: No code received")
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta http-equiv="refresh" content="2;url={frontend_url}/truelayer/callback?error=no_code">
+            <title>TrueLayer Authorization</title>
+        </head>
+        <body>
+            <p>No authorization code received</p>
+            <p>Redirecting...</p>
+        </body>
+        </html>
+        """
+        return HTMLResponse(content=html_content, status_code=200)
+    
+    if not state:
+        logger.error("TrueLayer callback: No state (user_id) received")
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta http-equiv="refresh" content="2;url={frontend_url}/truelayer/callback?error=no_state">
+            <title>TrueLayer Authorization</title>
+        </head>
+        <body>
+            <p>No user state received</p>
+            <p>Redirecting...</p>
+        </body>
+        </html>
+        """
+        return HTMLResponse(content=html_content, status_code=200)
+    
+    # State contains the user_id (Firebase UID)
+    user_id = state
+    
+    try:
+        # Exchange code for tokens (this uses client_secret securely on backend)
+        result = await truelayer_service.exchange_code_for_tokens(code, user_id)
+        logger.info(f"TrueLayer: Successfully saved tokens for user {user_id[:10]}...")
+        
+        # Return HTML that redirects to frontend with success
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta http-equiv="refresh" content="2;url={frontend_url}/truelayer/callback?success=true">
+            <title>TrueLayer Authorization</title>
+        </head>
+        <body>
+            <p>Bank account connected successfully!</p>
+            <p>Redirecting...</p>
+        </body>
+        </html>
+        """
+        return HTMLResponse(content=html_content, status_code=200)
+        
+    except Exception as e:
+        logger.error(f"Error in TrueLayer callback: {e}")
+        error_msg = str(e).replace('"', '&quot;')
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta http-equiv="refresh" content="2;url={frontend_url}/truelayer/callback?error={error_msg}">
+            <title>TrueLayer Authorization</title>
+        </head>
+        <body>
+            <p>Error: {error_msg}</p>
+            <p>Redirecting...</p>
+        </body>
+        </html>
+        """
+        return HTMLResponse(content=html_content, status_code=200)
+
+@app.get("/api/truelayer/status")
+async def get_truelayer_status(
+    current_user: User = Depends(get_current_user)
+):
+    """Check if user has connected TrueLayer"""
+    try:
+        is_connected = await truelayer_service.is_connected(current_user.uid)
+        return {"connected": is_connected}
+    except Exception as e:
+        logger.error(f"Error checking status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/truelayer/accounts")
+async def get_truelayer_accounts(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get user's bank accounts from TrueLayer
+    
+    This endpoint returns the accounts that were connected during OAuth.
+    The bank selection happened during the OAuth flow on TrueLayer's side.
+    
+    IMPORTANT: This does NOT return a list of available banks.
+    Bank selection is handled by TrueLayer during OAuth, not by our API.
+    """
+    try:
+        accounts = await truelayer_service.get_accounts(current_user.uid)
+        return {"accounts": accounts}
+    except Exception as e:
+        logger.error(f"Error fetching accounts: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/truelayer/accounts/{account_id}/transactions")
+async def get_truelayer_transactions(
+    account_id: str,
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """Get transactions for a specific account"""
+    try:
+        transactions = await truelayer_service.get_transactions(
+            current_user.uid,
+            account_id,
+            from_date,
+            to_date
+        )
+        return {"transactions": transactions}
+    except Exception as e:
+        logger.error(f"Error fetching transactions: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/truelayer/sync")
+async def sync_truelayer_transactions(
+    account_id: Optional[str] = None,
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """Sync transactions from TrueLayer, categorize with LLM, and save to database"""
+    try:
+        from utils.llm_classifier import classify_expense
+        from datetime import datetime, timedelta
+        
+        # Get accounts if account_id not provided
+        if not account_id:
+            accounts = await truelayer_service.get_accounts(current_user.uid)
+            if not accounts:
+                return {"message": "No accounts found", "synced": 0}
+            account_id = accounts[0]["account_id"]
+        
+        # Get transactions
+        transactions = await truelayer_service.get_transactions(
+            current_user.uid,
+            account_id,
+            from_date,
+            to_date
+        )
+        
+        synced_count = 0
+        errors = []
+        
+        for tx in transactions:
+            try:
+                # Only process debit transactions (expenses)
+                if tx.get("transaction_type") != "debit":
+                    continue
+                
+                # Extract transaction data
+                amount = abs(float(tx.get("amount", 0)))
+                description = tx.get("description", "Unknown transaction")
+                transaction_date = tx.get("timestamp", datetime.utcnow().isoformat())
+                
+                # Use LLM to classify the transaction
+                classification = classify_expense(description)
+                category = classification.get("category", "Uncategorized")
+                
+                # Create expense
+                expense_data = ExpenseCreate(
+                    amount=amount,
+                    category=category,
+                    description=description,
+                    date=transaction_date,
+                    currency=tx.get("currency", "EUR")
+                )
+                
+                await expense_service.create_expense(expense_data, current_user.uid)
+                synced_count += 1
+                
+            except Exception as e:
+                logger.error(f"Error processing transaction {tx.get('transaction_id')}: {e}")
+                errors.append(str(e))
+        
+        return {
+            "message": f"Synced {synced_count} transactions",
+            "synced": synced_count,
+            "errors": errors if errors else None
+        }
+        
+    except Exception as e:
+        logger.error(f"Error syncing transactions: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/truelayer/disconnect")
+async def disconnect_truelayer(
+    current_user: User = Depends(get_current_user)
+):
+    """Disconnect TrueLayer integration"""
+    try:
+        await truelayer_service.disconnect(current_user.uid)
+        return {"message": "Disconnected successfully"}
+    except Exception as e:
+        logger.error(f"Error disconnecting: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 if __name__ == "__main__":
     import uvicorn

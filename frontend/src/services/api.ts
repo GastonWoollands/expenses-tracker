@@ -221,6 +221,40 @@ class ApiService {
       body: JSON.stringify(profile),
     });
   }
+
+  // TrueLayer Integration
+  async getTrueLayerAuthLink(): Promise<{ auth_url: string }> {
+    return this.request('/api/truelayer/auth/link');
+  }
+
+  async getTrueLayerStatus(): Promise<{ connected: boolean }> {
+    return this.request('/api/truelayer/status');
+  }
+
+  async getTrueLayerAccounts(): Promise<{ accounts: any[] }> {
+    return this.request('/api/truelayer/accounts');
+  }
+
+  async getTrueLayerTransactions(accountId: string, fromDate?: string, toDate?: string): Promise<{ transactions: any[] }> {
+    const params = new URLSearchParams();
+    if (fromDate) params.append('from_date', fromDate);
+    if (toDate) params.append('to_date', toDate);
+    const query = params.toString();
+    return this.request(`/api/truelayer/accounts/${accountId}/transactions${query ? `?${query}` : ''}`);
+  }
+
+  async syncTrueLayerTransactions(accountId?: string, fromDate?: string, toDate?: string): Promise<{ message: string; synced: number; errors?: string[] }> {
+    return this.request('/api/truelayer/sync', {
+      method: 'POST',
+      body: JSON.stringify({ account_id: accountId, from_date: fromDate, to_date: toDate }),
+    });
+  }
+
+  async disconnectTrueLayer(): Promise<{ message: string }> {
+    return this.request('/api/truelayer/disconnect', {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const apiService = new ApiService();
