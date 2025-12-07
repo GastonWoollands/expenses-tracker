@@ -13,7 +13,8 @@ import {
   LogOut, 
   User,
   Menu,
-  X
+  X,
+  Repeat
 } from 'lucide-react';
 import { useState } from 'react';
 import { ThemeToggle } from '.';
@@ -27,6 +28,7 @@ const Layout: React.FC = () => {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Expenses', href: '/expenses', icon: Receipt },
+    { name: 'Fixed Expenses', href: '/fixed-expenses', icon: Repeat },
     { name: 'Budget', href: '/budget', icon: Wallet },
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   ];

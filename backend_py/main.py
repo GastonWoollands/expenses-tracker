@@ -29,10 +29,11 @@ logger = logging.getLogger(__name__)
 # Updated imports for Firebase and Neon
 from auth.firebase_auth import firebase_auth_service, get_current_user_from_token
 from services.expense_service import ExpenseService
+from services.fixed_expense_service import FixedExpenseService
 from services.sheets_service import SheetsService
 from services.llm_service import LLMService
 from services.category_service import category_service
-from models.expense import Expense, ExpenseCreate, ExpenseUpdate
+from models.expense import Expense, ExpenseCreate, ExpenseUpdate, FixedExpense, FixedExpenseCreate, FixedExpenseUpdate
 from models.user import User, UserUpdate
 from routers.budget import router as budget_router
 from routers.whatsapp import router as whatsapp_router
@@ -65,6 +66,7 @@ security = HTTPBearer()
 
 # Initialize services
 expense_service = ExpenseService()
+fixed_expense_service = FixedExpenseService()
 sheets_service = SheetsService()
 llm_service = LLMService()
 
@@ -454,25 +456,116 @@ async def get_category_breakdown(
         raise HTTPException(status_code=500, detail=str(e))
 
 # Fixed expenses endpoints
-@app.get("/fixed-expenses")
+@app.get("/api/v1/fixed-expenses", response_model=List[dict])
 async def get_fixed_expenses(current_user: User = Depends(get_current_user)):
     """Get user's fixed expenses"""
     try:
-        fixed_expenses = await expense_service.get_fixed_expenses(current_user.uid)
+        fixed_expenses = await fixed_expense_service.get_fixed_expenses(current_user.uid)
         return fixed_expenses
     except Exception as e:
+        logger.error(f"Error getting fixed expenses: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/fixed-expenses")
+@app.get("/api/v1/fixed-expenses/{fixed_expense_id}", response_model=dict)
+async def get_fixed_expense(
+    fixed_expense_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Get a specific fixed expense by ID"""
+    try:
+        fixed_expense = await fixed_expense_service.get_fixed_expense(fixed_expense_id, current_user.uid)
+        if not fixed_expense:
+            raise HTTPException(status_code=404, detail="Fixed expense not found")
+        return fixed_expense
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting fixed expense: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/fixed-expenses", response_model=dict)
 async def create_fixed_expense(
-    fixed_expense: dict,
+    fixed_expense_data: FixedExpenseCreate,
     current_user: User = Depends(get_current_user)
 ):
     """Create a new fixed expense"""
     try:
-        result = await expense_service.create_fixed_expense(fixed_expense, current_user.uid)
+        result = await fixed_expense_service.create_fixed_expense(
+            fixed_expense_data.dict(), 
+            current_user.uid
+        )
         return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        logger.error(f"Error creating fixed expense: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/v1/fixed-expenses/{fixed_expense_id}", response_model=dict)
+async def update_fixed_expense(
+    fixed_expense_id: str,
+    fixed_expense_data: FixedExpenseUpdate,
+    current_user: User = Depends(get_current_user)
+):
+    """Update an existing fixed expense"""
+    try:
+        result = await fixed_expense_service.update_fixed_expense(
+            fixed_expense_id,
+            fixed_expense_data.dict(exclude_unset=True),
+            current_user.uid
+        )
+        if not result:
+            raise HTTPException(status_code=404, detail="Fixed expense not found")
+        return result
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error updating fixed expense: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/v1/fixed-expenses/{fixed_expense_id}")
+async def delete_fixed_expense(
+    fixed_expense_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Delete a fixed expense (soft delete - sets is_active=false)"""
+    try:
+        success = await fixed_expense_service.delete_fixed_expense(fixed_expense_id, current_user.uid)
+        if not success:
+            raise HTTPException(status_code=404, detail="Fixed expense not found")
+        return {"message": "Fixed expense deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting fixed expense: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/fixed-expenses/apply/{year}/{month}")
+async def apply_fixed_expenses_for_month(
+    year: int,
+    month: int,
+    current_user: User = Depends(get_current_user)
+):
+    """Manually apply fixed expenses for a specific month/year"""
+    try:
+        if month < 1 or month > 12:
+            raise HTTPException(status_code=400, detail="Month must be between 1 and 12")
+        if year < 2000 or year > 2100:
+            raise HTTPException(status_code=400, detail="Year must be between 2000 and 2100")
+        
+        count = await fixed_expense_service.apply_fixed_expenses_for_month(current_user.uid, year, month)
+        return {
+            "message": f"Applied {count} fixed expense(s) for {year}-{month:02d}",
+            "count": count,
+            "year": year,
+            "month": month
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error applying fixed expenses: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

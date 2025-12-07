@@ -54,15 +54,27 @@ class ExpenseService:
         raise Exception("Failed to create expense")
     
     async def get_expense(self, expense_id: str, user_id: str) -> Optional[Expense]:
-        """Get expense by ID"""
-        query = """
-            SELECT t.*, c.name as category_name
-            FROM transactions t
-            LEFT JOIN categories c ON t.category_id = c.id
-            WHERE t.id = $1 AND t.user_id = $2 AND t.type = 'expense'
-        """
+        """Get expense by ID (excludes fixed expense templates)"""
+        # Try with is_fixed column, fallback if it doesn't exist
+        try:
+            query = """
+                SELECT t.*, c.name as category_name
+                FROM transactions t
+                LEFT JOIN categories c ON t.category_id = c.id
+                WHERE t.id = $1 AND t.user_id = $2 AND t.type = 'expense'
+                AND (t.is_fixed = false OR t.is_fixed IS NULL)
+            """
+            result = await self.neon.fetchrow(query, expense_id, user_id)
+        except Exception:
+            # Fallback if is_fixed column doesn't exist
+            query = """
+                SELECT t.*, c.name as category_name
+                FROM transactions t
+                LEFT JOIN categories c ON t.category_id = c.id
+                WHERE t.id = $1 AND t.user_id = $2 AND t.type = 'expense'
+            """
+            result = await self.neon.fetchrow(query, expense_id, user_id)
         
-        result = await self.neon.fetchrow(query, expense_id, user_id)
         if result:
             row = dict(result)
             category_name = row.get("category_name", "Uncategorized")
@@ -70,17 +82,31 @@ class ExpenseService:
         return None
     
     async def get_user_expenses(self, user_id: str, limit: int = 100, offset: int = 0) -> List[Expense]:
-        """Get user expenses with pagination"""
-        query = """
-            SELECT t.*, c.name as category_name
-            FROM transactions t
-            LEFT JOIN categories c ON t.category_id = c.id
-            WHERE t.user_id = $1 AND t.type = 'expense'
-            ORDER BY t.occurred_at DESC
-            LIMIT $2 OFFSET $3
-        """
+        """Get user expenses with pagination (excludes fixed expense templates)"""
+        # Try with is_fixed column, fallback if it doesn't exist
+        try:
+            query = """
+                SELECT t.*, c.name as category_name
+                FROM transactions t
+                LEFT JOIN categories c ON t.category_id = c.id
+                WHERE t.user_id = $1 AND t.type = 'expense'
+                AND (t.is_fixed = false OR t.is_fixed IS NULL)
+                ORDER BY t.occurred_at DESC
+                LIMIT $2 OFFSET $3
+            """
+            results = await self.neon.fetch(query, user_id, limit, offset)
+        except Exception:
+            # Fallback if is_fixed column doesn't exist
+            query = """
+                SELECT t.*, c.name as category_name
+                FROM transactions t
+                LEFT JOIN categories c ON t.category_id = c.id
+                WHERE t.user_id = $1 AND t.type = 'expense'
+                ORDER BY t.occurred_at DESC
+                LIMIT $2 OFFSET $3
+            """
+            results = await self.neon.fetch(query, user_id, limit, offset)
         
-        results = await self.neon.fetch(query, user_id, limit, offset)
         return [self._map_to_expense(dict(row), row.get("category_name", "Uncategorized")) for row in results]
     
     async def update_expense(self, expense_id: str, expense_data: ExpenseUpdate, user_id: str) -> Optional[Expense]:
@@ -154,7 +180,20 @@ class ExpenseService:
         return result is not None
     
     async def get_expense_summary(self, user_id: str, month: Optional[int] = None, year: Optional[int] = None) -> Dict[str, Any]:
-        """Get expense summary for analytics"""
+        """Get expense summary for analytics (includes applied fixed expenses, excludes templates)"""
+        # Check if is_fixed column exists
+        has_is_fixed = False
+        try:
+            check_query = """
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = 'transactions' AND column_name = 'is_fixed'
+            """
+            result = await self.neon.fetchrow(check_query)
+            has_is_fixed = result is not None
+        except Exception:
+            pass
+        
         query_parts = [
             """
             SELECT 
@@ -165,6 +204,9 @@ class ExpenseService:
             WHERE user_id = $1 AND type = 'expense'
             """
         ]
+        if has_is_fixed:
+            query_parts[0] = query_parts[0].rstrip() + "\n            AND (is_fixed = false OR is_fixed IS NULL)"
+        
         params = [user_id]
         param_index = 2
         
@@ -197,7 +239,20 @@ class ExpenseService:
         }
     
     async def get_category_breakdown(self, user_id: str, month: Optional[int] = None, year: Optional[int] = None) -> List[Dict[str, Any]]:
-        """Get expense breakdown by category"""
+        """Get expense breakdown by category (includes applied fixed expenses, excludes templates)"""
+        # Check if is_fixed column exists
+        has_is_fixed = False
+        try:
+            check_query = """
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = 'transactions' AND column_name = 'is_fixed'
+            """
+            result = await self.neon.fetchrow(check_query)
+            has_is_fixed = result is not None
+        except Exception:
+            pass
+        
         query_parts = [
             """
             SELECT 
@@ -209,6 +264,9 @@ class ExpenseService:
             WHERE t.user_id = $1 AND t.type = 'expense'
             """
         ]
+        if has_is_fixed:
+            query_parts[0] = query_parts[0].rstrip() + "\n            AND (t.is_fixed = false OR t.is_fixed IS NULL)"
+        
         params = [user_id]
         param_index = 2
         

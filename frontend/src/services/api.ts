@@ -52,6 +52,39 @@ export interface CategoryBreakdown {
   percentage: number;
 }
 
+export interface FixedExpense {
+  id: string;
+  user_id: string;
+  category_id?: string;
+  category_name: string;
+  category_key?: string;
+  amount: number;
+  description: string;
+  day_of_month: number;
+  is_active: boolean;
+  currency: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface FixedExpenseCreate {
+  category: string;
+  amount: number;
+  description: string;
+  day_of_month: number;
+  currency?: string;
+  is_active?: boolean;
+}
+
+export interface FixedExpenseUpdate {
+  category?: string;
+  amount?: number;
+  description?: string;
+  day_of_month?: number;
+  currency?: string;
+  is_active?: boolean;
+}
+
 class ApiService {
   private async getAuthHeaders(): Promise<HeadersInit> {
     const token = await getSession();
@@ -169,14 +202,37 @@ class ApiService {
   }
 
   // Fixed Expenses
-  async getFixedExpenses(): Promise<any[]> {
-    return this.request('/fixed-expenses');
+  async getFixedExpenses(): Promise<FixedExpense[]> {
+    return this.request('/api/v1/fixed-expenses');
   }
 
-  async createFixedExpense(fixedExpense: any): Promise<any> {
-    return this.request('/fixed-expenses', {
+  async getFixedExpense(id: string): Promise<FixedExpense> {
+    return this.request(`/api/v1/fixed-expenses/${id}`);
+  }
+
+  async createFixedExpense(fixedExpense: FixedExpenseCreate): Promise<FixedExpense> {
+    return this.request('/api/v1/fixed-expenses', {
       method: 'POST',
       body: JSON.stringify(fixedExpense),
+    });
+  }
+
+  async updateFixedExpense(id: string, fixedExpense: FixedExpenseUpdate): Promise<FixedExpense> {
+    return this.request(`/api/v1/fixed-expenses/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(fixedExpense),
+    });
+  }
+
+  async deleteFixedExpense(id: string): Promise<{ message: string }> {
+    return this.request(`/api/v1/fixed-expenses/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async applyFixedExpensesForMonth(year: number, month: number): Promise<{ message: string; count: number; year: number; month: number }> {
+    return this.request(`/api/v1/fixed-expenses/apply/${year}/${month}`, {
+      method: 'POST',
     });
   }
 
@@ -224,3 +280,6 @@ class ApiService {
 }
 
 export const apiService = new ApiService();
+
+// Explicit type exports for better module resolution
+export type { FixedExpense, FixedExpenseCreate, FixedExpenseUpdate };

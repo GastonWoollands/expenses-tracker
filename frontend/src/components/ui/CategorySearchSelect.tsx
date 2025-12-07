@@ -131,36 +131,41 @@ const CategorySearchSelect: React.FC<CategorySearchSelectProps> = ({
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
       {/* Trigger Button */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        onKeyDown={handleKeyDown}
-        className={`w-full px-3 py-2 text-left bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-          isOpen ? 'ring-2 ring-blue-500 border-blue-500' : ''
-        } ${required && !value ? 'border-red-300 dark:border-red-600' : ''}`}
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-        aria-required={required}
-      >
-        <div className="flex items-center justify-between">
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          onKeyDown={handleKeyDown}
+          className={`w-full px-3 py-2 text-left bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+            isOpen ? 'ring-2 ring-blue-500 border-blue-500' : ''
+          } ${required && !value ? 'border-red-300 dark:border-red-600' : ''} ${
+            value ? 'pr-20' : 'pr-10'
+          }`}
+          aria-haspopup="listbox"
+          aria-expanded={isOpen}
+          aria-required={required}
+        >
           <span className={selectedCategory ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}>
             {isLoading ? 'Loading categories...' : selectedCategory ? selectedCategory.name : placeholder}
           </span>
-          <div className="flex items-center space-x-2">
-            {value && (
-              <button
-                type="button"
-                onClick={handleClear}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                aria-label="Clear selection"
-              >
-                <X className="w-4 h-4 text-gray-400" />
-              </button>
-            )}
-            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-          </div>
+        </button>
+        <div className="absolute inset-y-0 right-0 flex items-center space-x-1 pr-2">
+          {value && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClear(e);
+              }}
+              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              aria-label="Clear selection"
+            >
+              <X className="w-4 h-4 text-gray-400" />
+            </button>
+          )}
+          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''} pointer-events-none`} />
         </div>
-      </button>
+      </div>
 
       {/* Dropdown */}
       {isOpen && (

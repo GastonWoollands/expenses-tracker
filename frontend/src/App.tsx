@@ -6,7 +6,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { Login, Register, Dashboard, Expenses, Budget, Analytics } from './pages';
+import { Login, Register, Dashboard, Expenses, Budget, Analytics, FixedExpenses } from './pages';
 import { Layout, LoadingSpinner } from './components';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -75,6 +75,7 @@ const AppRoutes: React.FC = () => {
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
               <Route path="expenses" element={<ErrorBoundary><Expenses /></ErrorBoundary>} />
+              <Route path="fixed-expenses" element={<ErrorBoundary><FixedExpenses /></ErrorBoundary>} />
               <Route path="budget" element={<ErrorBoundary><Budget /></ErrorBoundary>} />
               <Route path="analytics" element={<ErrorBoundary><Analytics /></ErrorBoundary>} />
             </Route>

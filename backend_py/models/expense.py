@@ -58,17 +58,38 @@ class Expense(ExpenseBase):
     class Config:
         from_attributes = True
 
-class FixedExpense(BaseModel):
-    """Model for fixed/recurring expenses"""
+class FixedExpenseBase(BaseModel):
+    """Base model for fixed expenses"""
+    category: str = Field(..., description="Expense category name")
+    amount: float = Field(..., gt=0, description="Expense amount")
+    description: str = Field(..., min_length=1, max_length=500, description="Expense description/notes")
+    day_of_month: int = Field(..., ge=1, le=31, description="Day of month to apply the expense (1-31)")
+    currency: str = Field(default="EUR", description="Currency code (e.g., EUR, USD)")
+    is_active: bool = Field(default=True, description="Whether the fixed expense is active")
+
+class FixedExpenseCreate(FixedExpenseBase):
+    """Model for creating a new fixed expense"""
+    pass
+
+class FixedExpenseUpdate(BaseModel):
+    """Model for updating a fixed expense"""
+    category: Optional[str] = None
+    amount: Optional[float] = Field(None, gt=0)
+    description: Optional[str] = Field(None, min_length=1, max_length=500)
+    day_of_month: Optional[int] = Field(None, ge=1, le=31)
+    currency: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class FixedExpense(FixedExpenseBase):
+    """Full fixed expense model with ID and metadata"""
     id: str = Field(..., description="Unique fixed expense ID")
     user_id: str = Field(..., description="User ID")
-    category: ExpenseCategory = Field(..., description="Expense category")
-    amount: float = Field(..., gt=0, description="Expense amount")
-    description: str = Field(..., min_length=1, max_length=500, description="Expense description")
-    day_of_month: int = Field(..., ge=1, le=31, description="Day of month to apply the expense")
-    is_active: bool = Field(default=True, description="Whether the fixed expense is active")
+    category_id: Optional[str] = Field(None, description="Category ID")
     created_at: datetime = Field(..., description="When the fixed expense was created")
-    updated_at: datetime = Field(..., description="When the fixed expense was last updated")
+    updated_at: Optional[datetime] = Field(None, description="When the fixed expense was last updated")
+
+    class Config:
+        from_attributes = True
 
 class ExpenseSummary(BaseModel):
     """Model for expense summary analytics"""
