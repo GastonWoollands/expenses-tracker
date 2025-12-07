@@ -96,10 +96,12 @@ const FixedExpenseForm: React.FC<FixedExpenseFormProps> = ({
 
     try {
       // Find category name from either ALL_CATEGORIES or userCategories
-      const categoryInfo = ALL_CATEGORIES.find(c => c.key === form.category) ||
-                          userCategories.find(c => c.key === form.category);
+      const allCat = ALL_CATEGORIES.find(c => c.key === form.category);
+      const userCat = userCategories.find(c => c.key === form.category);
+      const categoryName = allCat?.label || userCat?.name || form.category;
+      
       const formData = {
-        category: categoryInfo?.label || categoryInfo?.name || form.category,
+        category: categoryName,
         amount: Number(form.amount),
         day_of_month: Number(form.day_of_month),
         description: form.description.trim(),

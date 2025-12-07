@@ -280,6 +280,3 @@ class ApiService {
 }
 
 export const apiService = new ApiService();
-
-// Explicit type exports for better module resolution
-export type { FixedExpense, FixedExpenseCreate, FixedExpenseUpdate };
