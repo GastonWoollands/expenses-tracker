@@ -48,12 +48,20 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# CORS Configuration
+def get_cors_origins() -> List[str]:
+    """Get CORS allowed origins from environment"""
+    origins_env = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173")
+    origins = [origin.strip() for origin in origins_env.split(",") if origin.strip()]
+    logger.info(f"CORS allowed origins: {origins}")
+    return origins
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=get_cors_origins(),
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -164,10 +172,23 @@ async def webhook_receive(request: Request, background_tasks: BackgroundTasks):
         logger.error(traceback.format_exc())
         return {"status": "error", "detail": str(e)}
 
-# Initialize default categories on startup
+# Connection Pool Lifecycle
 @app.on_event("startup")
 async def startup_event():
+    """Initialize database connection pool and default categories"""
+    from database.neon_client import get_neon
+    neon = get_neon()
+    await neon.get_pool()  # Initialize pool
+    logger.info("Database connection pool initialized")
     await category_service.initialize_default_categories()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Close database connection pool"""
+    from database.neon_client import get_neon
+    neon = get_neon()
+    await neon.close_pool()
+    logger.info("Database connection pool closed")
 
 # Updated dependency to get current user
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
