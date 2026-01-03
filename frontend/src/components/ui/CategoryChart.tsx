@@ -48,18 +48,25 @@ const CategoryChart: React.FC<CategoryChartProps> = ({
         <ResponsiveContainer width="100%" height={300}>
           <PieChart>
             <Pie
-              data={sortedData}
+              data={sortedData as any}
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ name, percentage }) => `${name}: ${percentage.toFixed(1)}%`}
+              label={(props: any) => {
+                const { payload } = props;
+                return `${payload.category}: ${payload.percentage.toFixed(1)}%`;
+              }}
               outerRadius={100}
               fill="#8884d8"
               dataKey="amount"
-              onClick={(data) => onCategoryClick && onCategoryClick(data.category)}
+              onClick={(data: any) => {
+                if (data && data.payload && onCategoryClick) {
+                  onCategoryClick(data.payload.category);
+                }
+              }}
               style={{ cursor: onCategoryClick ? 'pointer' : 'default' }}
             >
-              {sortedData.map((entry, index) => (
+              {sortedData.map((_entry, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
@@ -116,7 +123,11 @@ const CategoryChart: React.FC<CategoryChartProps> = ({
             dataKey="amount"
             fill="#94a3b8"
             radius={[0, 0, 0, 0]}
-            onClick={(data) => onCategoryClick && onCategoryClick(data.category)}
+            onClick={(data: any) => {
+              if (data && data.payload && onCategoryClick) {
+                onCategoryClick(data.payload.category);
+              }
+            }}
             style={{ cursor: onCategoryClick ? 'pointer' : 'default' }}
           />
         </BarChart>

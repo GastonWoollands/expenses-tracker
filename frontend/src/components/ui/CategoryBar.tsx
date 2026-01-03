@@ -22,7 +22,6 @@ interface CategoryBarProps {
 const CategoryBar: React.FC<CategoryBarProps> = ({
   data,
   className = '',
-  title,
   subtitle
 }) => {
   if (data.length === 0) {

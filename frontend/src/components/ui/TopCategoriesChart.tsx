@@ -44,17 +44,6 @@ const TopCategoriesChart: React.FC<TopCategoriesChartProps> = ({
     trendDirection: item.trend_direction
   }));
 
-  const getTrendColor = (direction: string) => {
-    switch (direction) {
-      case 'up':
-        return '#ef4444'; // red
-      case 'down':
-        return '#10b981'; // green
-      default:
-        return '#64748b'; // gray
-    }
-  };
-
   const getTrendIcon = (direction: string) => {
     switch (direction) {
       case 'up':
@@ -100,7 +89,7 @@ const TopCategoriesChart: React.FC<TopCategoriesChartProps> = ({
             labelStyle={{ fontSize: '11px', fontWeight: 500, color: '#64748b' }}
           />
           <Bar dataKey="amount" fill="#94a3b8" radius={[0, 0, 0, 0]}>
-            {chartData.map((entry, index) => (
+            {chartData.map((_entry, index) => (
               <Cell key={`cell-${index}`} fill="#94a3b8" />
             ))}
           </Bar>

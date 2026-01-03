@@ -38,7 +38,6 @@ function DataTable<T extends Record<string, any>>({
   sortDirection,
   className = '',
   emptyMessage = 'No data available',
-  title,
   subtitle,
   renderMobileActions
 }: DataTableProps<T>) {

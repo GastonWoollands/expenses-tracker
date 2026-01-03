@@ -3,7 +3,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { formatCurrency } from '../../utils/formatters';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
@@ -124,7 +124,7 @@ const SpendingTrendChart: React.FC<SpendingTrendChartProps> = ({
             Month-by-Month Comparison
           </h4>
           <div className="space-y-2">
-            {chartData.map((item, index) => {
+            {chartData.map((item, _index) => {
               const change = item.change;
               const hasChange = change !== null;
               const isIncrease = hasChange && change > 0;

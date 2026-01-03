@@ -59,12 +59,15 @@ const FixedVsVariableChart: React.FC<FixedVsVariableChartProps> = ({
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ type, percentage }) => `${type}: ${percentage.toFixed(1)}%`}
+              label={(props: any) => {
+                const { payload } = props;
+                return `${payload.type}: ${payload.percentage.toFixed(1)}%`;
+              }}
               outerRadius={100}
               fill="#8884d8"
               dataKey="amount"
             >
-              {chartData.map((entry, index) => (
+              {chartData.map((_entry, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
@@ -115,7 +118,7 @@ const FixedVsVariableChart: React.FC<FixedVsVariableChartProps> = ({
           />
           <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 300 }} />
           <Bar dataKey="amount" fill="#94a3b8" radius={[0, 0, 0, 0]}>
-            {chartData.map((entry, index) => (
+            {chartData.map((_entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Bar>
