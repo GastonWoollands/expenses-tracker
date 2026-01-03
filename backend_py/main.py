@@ -48,7 +48,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS Configuration
 def get_cors_origins() -> List[str]:
     """Get CORS allowed origins from environment"""
     origins_env = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173")
@@ -175,16 +174,27 @@ async def webhook_receive(request: Request, background_tasks: BackgroundTasks):
 # Connection Pool Lifecycle
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database connection pool and default categories"""
+    """Initialize database connection pool, default categories, and scheduler"""
     from database.neon_client import get_neon
     neon = get_neon()
     await neon.get_pool()  # Initialize pool
     logger.info("Database connection pool initialized")
     await category_service.initialize_default_categories()
+    
+    # Start scheduler for automatic fixed expenses application
+    from services.scheduler_service import scheduler_service
+    await scheduler_service.start()
+    # Apply current month on startup if needed
+    await scheduler_service.apply_current_month_if_needed()
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Close database connection pool"""
+    """Close database connection pool and shutdown scheduler"""
+    # Shutdown scheduler first
+    from services.scheduler_service import scheduler_service
+    await scheduler_service.shutdown()
+    
+    # Close database connection pool
     from database.neon_client import get_neon
     neon = get_neon()
     await neon.close_pool()

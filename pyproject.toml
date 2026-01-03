@@ -23,7 +23,8 @@ dependencies = [
     "firebase-admin (>=7.1.0,<8.0.0)",
     "sqlalchemy (>=2.0.43,<3.0.0)",
     "asyncpg (>=0.30.0,<0.31.0)",
-    "openpyxl (>=3.1.5,<4.0.0)"
+    "openpyxl (>=3.1.5,<4.0.0)",
+    "apscheduler (>=3.11.2,<4.0.0)"
 ]
 
 [tool.poetry]

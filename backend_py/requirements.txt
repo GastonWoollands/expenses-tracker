@@ -16,3 +16,6 @@ openai-whisper>=20231117
 # LLM integration (for expense classification)
 agno>=1.5.1,<2.0.0
 google-genai>=1.15.0,<2.0.0
+
+# Task scheduling
+APScheduler>=3.11.2
