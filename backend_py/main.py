@@ -381,16 +381,44 @@ async def create_expense(
 async def get_expenses(
     current_user: User = Depends(get_current_user),
     limit: int = 100,
-    offset: int = 0
+    offset: int = 0,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None
 ):
-    """Get user's expenses with pagination"""
+    """Get user's expenses with pagination and optional date filtering"""
     try:
+        from datetime import datetime, timezone
+        start = None
+        end = None
+        
+        if start_date:
+            try:
+                start = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            except (ValueError, AttributeError):
+                start = datetime.fromisoformat(start_date)
+            # Ensure timezone-aware
+            if start.tzinfo is None:
+                start = start.replace(tzinfo=timezone.utc)
+        
+        if end_date:
+            try:
+                end = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            except (ValueError, AttributeError):
+                end = datetime.fromisoformat(end_date)
+            # Ensure timezone-aware
+            if end.tzinfo is None:
+                end = end.replace(tzinfo=timezone.utc)
+        
         expenses = await expense_service.get_user_expenses(
             current_user.uid, 
             limit=limit, 
-            offset=offset
+            offset=offset,
+            start_date=start,
+            end_date=end
         )
         return expenses
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid date format: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -472,18 +500,256 @@ async def get_expense_summary(
 @app.get("/analytics/categories")
 async def get_category_breakdown(
     current_user: User = Depends(get_current_user),
-    month: Optional[int] = None,
-    year: Optional[int] = None
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    expense_type: Optional[str] = None,
+    categories: Optional[str] = None,  # Comma-separated list
+    min_amount: Optional[float] = None,
+    max_amount: Optional[float] = None
 ):
     """Get expense breakdown by category"""
     try:
+        from datetime import datetime, timezone
+        start = None
+        end = None
+        if start_date:
+            try:
+                start = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            except (ValueError, AttributeError):
+                start = datetime.fromisoformat(start_date)
+            if start.tzinfo is None:
+                start = start.replace(tzinfo=timezone.utc)
+        if end_date:
+            try:
+                end = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            except (ValueError, AttributeError):
+                end = datetime.fromisoformat(end_date)
+            if end.tzinfo is None:
+                end = end.replace(tzinfo=timezone.utc)
+        
+        category_list = None
+        if categories:
+            category_list = [c.strip() for c in categories.split(',') if c.strip()]
+        
         breakdown = await expense_service.get_category_breakdown(
-            current_user.uid, 
-            month=month, 
-            year=year
+            current_user.uid,
+            start_date=start,
+            end_date=end,
+            expense_type=expense_type,
+            categories=category_list,
+            min_amount=min_amount,
+            max_amount=max_amount
         )
         return breakdown
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid date format: {str(e)}")
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/analytics/trends")
+async def get_expense_trends(
+    current_user: User = Depends(get_current_user),
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    expense_type: Optional[str] = None,  # 'fixed', 'variable', or None for all
+    categories: Optional[str] = None,  # Comma-separated list
+    min_amount: Optional[float] = None,
+    max_amount: Optional[float] = None
+):
+    """Get monthly spending trends over time"""
+    try:
+        from datetime import datetime, timezone
+        start = None
+        end = None
+        if start_date:
+            try:
+                start = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            except (ValueError, AttributeError):
+                start = datetime.fromisoformat(start_date)
+            # Ensure timezone-aware
+            if start.tzinfo is None:
+                start = start.replace(tzinfo=timezone.utc)
+        if end_date:
+            try:
+                end = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            except (ValueError, AttributeError):
+                end = datetime.fromisoformat(end_date)
+            # Ensure timezone-aware
+            if end.tzinfo is None:
+                end = end.replace(tzinfo=timezone.utc)
+        
+        category_list = None
+        if categories:
+            category_list = [c.strip() for c in categories.split(',') if c.strip()]
+        
+        trends = await expense_service.get_expense_trends(
+            current_user.uid,
+            start_date=start,
+            end_date=end,
+            expense_type=expense_type,
+            categories=category_list,
+            min_amount=min_amount,
+            max_amount=max_amount
+        )
+        return trends
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid date format: {str(e)}")
+    except Exception as e:
+        logger.error(f"Error getting expense trends: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/analytics/patterns")
+async def get_spending_patterns(
+    current_user: User = Depends(get_current_user),
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    expense_type: Optional[str] = None,  # 'fixed', 'variable', or None for all
+    categories: Optional[str] = None,  # Comma-separated list
+    min_amount: Optional[float] = None,
+    max_amount: Optional[float] = None
+):
+    """Get spending patterns by day of week and time of month"""
+    try:
+        from datetime import datetime, timezone
+        start = None
+        end = None
+        if start_date:
+            try:
+                start = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            except (ValueError, AttributeError):
+                start = datetime.fromisoformat(start_date)
+            # Ensure timezone-aware
+            if start.tzinfo is None:
+                start = start.replace(tzinfo=timezone.utc)
+        if end_date:
+            try:
+                end = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            except (ValueError, AttributeError):
+                end = datetime.fromisoformat(end_date)
+            # Ensure timezone-aware
+            if end.tzinfo is None:
+                end = end.replace(tzinfo=timezone.utc)
+        
+        category_list = None
+        if categories:
+            category_list = [c.strip() for c in categories.split(',') if c.strip()]
+        
+        patterns = await expense_service.get_spending_patterns(
+            current_user.uid,
+            start_date=start,
+            end_date=end,
+            expense_type=expense_type,
+            categories=category_list,
+            min_amount=min_amount,
+            max_amount=max_amount
+        )
+        return patterns
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid date format: {str(e)}")
+    except Exception as e:
+        logger.error(f"Error getting spending patterns: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/analytics/top-categories")
+async def get_top_categories_with_trends(
+    current_user: User = Depends(get_current_user),
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    expense_type: Optional[str] = None,  # 'fixed', 'variable', or None for all
+    categories: Optional[str] = None,  # Comma-separated list
+    min_amount: Optional[float] = None,
+    max_amount: Optional[float] = None,
+    limit: int = 10
+):
+    """Get top categories with trend indicators"""
+    try:
+        from datetime import datetime, timezone
+        start = None
+        end = None
+        if start_date:
+            try:
+                start = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            except (ValueError, AttributeError):
+                start = datetime.fromisoformat(start_date)
+            # Ensure timezone-aware
+            if start.tzinfo is None:
+                start = start.replace(tzinfo=timezone.utc)
+        if end_date:
+            try:
+                end = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            except (ValueError, AttributeError):
+                end = datetime.fromisoformat(end_date)
+            # Ensure timezone-aware
+            if end.tzinfo is None:
+                end = end.replace(tzinfo=timezone.utc)
+        
+        category_list = None
+        if categories:
+            category_list = [c.strip() for c in categories.split(',') if c.strip()]
+        
+        top_categories = await expense_service.get_top_categories_with_trends(
+            current_user.uid,
+            start_date=start,
+            end_date=end,
+            expense_type=expense_type,
+            categories=category_list,
+            min_amount=min_amount,
+            max_amount=max_amount,
+            limit=limit
+        )
+        return top_categories
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid date format: {str(e)}")
+    except Exception as e:
+        logger.error(f"Error getting top categories: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/analytics/fixed-vs-variable")
+async def get_fixed_vs_variable_comparison(
+    current_user: User = Depends(get_current_user),
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    categories: Optional[str] = None,  # Comma-separated list
+    min_amount: Optional[float] = None,
+    max_amount: Optional[float] = None
+):
+    """Get comparison of fixed vs variable expenses"""
+    try:
+        from datetime import datetime, timezone
+        start = None
+        end = None
+        if start_date:
+            try:
+                start = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            except (ValueError, AttributeError):
+                start = datetime.fromisoformat(start_date)
+            if start.tzinfo is None:
+                start = start.replace(tzinfo=timezone.utc)
+        if end_date:
+            try:
+                end = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            except (ValueError, AttributeError):
+                end = datetime.fromisoformat(end_date)
+            if end.tzinfo is None:
+                end = end.replace(tzinfo=timezone.utc)
+        
+        category_list = None
+        if categories:
+            category_list = [c.strip() for c in categories.split(',') if c.strip()]
+        
+        comparison = await expense_service.get_fixed_vs_variable_comparison(
+            current_user.uid,
+            start_date=start,
+            end_date=end,
+            categories=category_list,
+            min_amount=min_amount,
+            max_amount=max_amount
+        )
+        return comparison
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid date format: {str(e)}")
+    except Exception as e:
+        logger.error(f"Error getting fixed vs variable comparison: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # Fixed expenses endpoints

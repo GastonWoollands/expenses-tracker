@@ -280,6 +280,30 @@ CREATE INDEX idx_transactions_tags ON transactions USING GIN(tags);
 CREATE INDEX idx_transactions_metadata ON transactions USING GIN(metadata);
 
 -- =============================================
+-- Fixed Expenses Table
+-- =============================================
+-- Templates for recurring expenses that are applied by the scheduler
+CREATE TABLE fixed_expenses (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
+    amount DECIMAL(15,2) NOT NULL CHECK (amount > 0),
+    currency TEXT NOT NULL DEFAULT 'EUR',
+    description TEXT,
+    fixed_interval VARCHAR(20) NOT NULL CHECK (fixed_interval IN ('daily', 'weekly', 'monthly', 'yearly')),
+    fixed_day_of_month INTEGER CHECK (fixed_day_of_month >= 1 AND fixed_day_of_month <= 31),
+    fixed_day_of_week INTEGER CHECK (fixed_day_of_week >= 0 AND fixed_day_of_week <= 6),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_fixed_expenses_user_id ON fixed_expenses(user_id);
+CREATE INDEX idx_fixed_expenses_category_id ON fixed_expenses(category_id);
+CREATE INDEX idx_fixed_expenses_active ON fixed_expenses(is_active);
+CREATE INDEX idx_fixed_expenses_user_active ON fixed_expenses(user_id, is_active);
+
+-- =============================================
 -- Supporting Tables
 -- =============================================
 

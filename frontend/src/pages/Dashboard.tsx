@@ -3,14 +3,16 @@
  * Mobile-first design with elegant interactions
  */
 
-import React, { useState } from 'react';
-import { ResponsiveContainer, Heading, MetricCard, DataTable, CategoryBar, EditExpenseModal, Toast } from '../components';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ResponsiveContainer, Heading, DataTable, CategoryBar, EditExpenseModal, Toast } from '../components';
 import type { Column, SortDirection } from '../components/ui/DataTable';
 import { useCurrentMonthExpenses, useExpenseSummary, useMonthlyTotals, useExpenses } from '../hooks/useDashboardData';
 import { formatCurrency, formatDateShort, getCurrentMonthName, getCurrentYear, calculatePercentage, sortByKey, getPreviousMonth, calculateTrendPercentage } from '../utils/formatters';
 import { TrendingUp, TrendingDown, Edit2, Trash2 } from 'lucide-react';
 import type { Expense, ExpenseUpdate } from '../services/api';
 import { apiService } from '../services/api';
+import { startOfMonth, endOfMonth } from 'date-fns';
+import { formatDateForAPI } from '../utils/analytics';
 
 const Dashboard: React.FC = () => {
   // Use hooks - refetch the one that actually provides the displayed data
@@ -24,6 +26,43 @@ const Dashboard: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
+  
+  // Fixed vs Variable data for current month
+  const [fixedVsVariable, setFixedVsVariable] = useState<{
+    fixed: { amount: number; count: number; percentage: number };
+    variable: { amount: number; count: number; percentage: number };
+  } | null>(null);
+  const [fixedVsVariableLoading, setFixedVsVariableLoading] = useState(true);
+  
+  // Calculate current month date range
+  const currentMonthRange = useMemo(() => {
+    const now = new Date();
+    return {
+      startDate: startOfMonth(now),
+      endDate: endOfMonth(now)
+    };
+  }, []);
+  
+  // Fetch fixed vs variable comparison for current month
+  useEffect(() => {
+    const fetchFixedVsVariable = async () => {
+      try {
+        setFixedVsVariableLoading(true);
+        const data = await apiService.getFixedVsVariableComparison(
+          formatDateForAPI(currentMonthRange.startDate),
+          formatDateForAPI(currentMonthRange.endDate)
+        );
+        setFixedVsVariable(data);
+      } catch (error) {
+        console.error('Error fetching fixed vs variable data:', error);
+        setFixedVsVariable(null);
+      } finally {
+        setFixedVsVariableLoading(false);
+      }
+    };
+    
+    fetchFixedVsVariable();
+  }, [currentMonthRange]);
 
   // Debug logging
   console.log('Dashboard state:', {
@@ -163,7 +202,7 @@ const Dashboard: React.FC = () => {
       label: 'Category',
       sortable: true,
       render: (value: any) => (
-        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+        <span className="text-xs font-light text-slate-600 dark:text-slate-400">
           {String(value)}
         </span>
       ),
@@ -171,11 +210,27 @@ const Dashboard: React.FC = () => {
       mobileHidden: true
     },
     {
+      key: 'is_fixed' as keyof Expense,
+      label: 'Type',
+      sortable: true,
+      render: (_value: any, item: Expense) => (
+        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-light ${
+          item.is_fixed 
+            ? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300' 
+            : 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+        }`}>
+          {item.is_fixed ? 'Fixed' : 'Variable'}
+        </span>
+      ),
+      className: 'w-20 sm:w-24',
+      mobileHidden: true
+    },
+    {
       key: 'amount',
       label: 'Amount',
       sortable: true,
       render: (value: any) => (
-        <span className="font-semibold text-gray-900 dark:text-white">
+        <span className="font-light text-slate-900 dark:text-slate-100">
           {formatCurrency(Number(value))}
         </span>
       ),
@@ -192,7 +247,7 @@ const Dashboard: React.FC = () => {
               e.stopPropagation();
               handleEdit(item);
             }}
-            className="p-1.5 text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="p-1.5 text-slate-600 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-slate-800"
             title="Edit expense"
           >
             <Edit2 className="h-4 w-4" />
@@ -202,7 +257,7 @@ const Dashboard: React.FC = () => {
               e.stopPropagation();
               await handleDelete(item);
             }}
-            className="p-1.5 text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="p-1.5 text-slate-600 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 transition-colors rounded-md hover:bg-slate-100 dark:hover:bg-slate-800"
             title="Delete expense"
           >
             <Trash2 className="h-4 w-4" />
@@ -230,10 +285,10 @@ const Dashboard: React.FC = () => {
       label: 'Month',
       render: (value: any, item: any) => (
         <div>
-          <div className="font-medium text-gray-900 dark:text-white">
+          <div className="font-light text-slate-900 dark:text-slate-100">
             {String(value)}
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="text-xs text-slate-400 dark:text-slate-500 font-light">
             {item.year}
           </div>
         </div>
@@ -244,7 +299,7 @@ const Dashboard: React.FC = () => {
       key: 'total',
       label: 'Total',
       render: (value: any) => formatCurrency(Number(value)),
-      className: 'text-right font-semibold'
+      className: 'text-right font-light'
     },
     {
       key: 'trend',
@@ -255,7 +310,7 @@ const Dashboard: React.FC = () => {
         
         const isPositive = trend > 0;
         return (
-          <span className={`inline-flex items-center text-sm font-medium ${
+          <span className={`inline-flex items-center text-sm font-light ${
             isPositive 
               ? 'text-green-600 dark:text-green-400' 
               : 'text-red-600 dark:text-red-400'
@@ -270,7 +325,7 @@ const Dashboard: React.FC = () => {
     }
   ];
 
-  const isLoading = expensesLoading || summaryLoading || totalsLoading;
+  const isLoading = expensesLoading || summaryLoading || totalsLoading || fixedVsVariableLoading;
 
   if (isLoading) {
     return (
@@ -315,84 +370,136 @@ const Dashboard: React.FC = () => {
 
   return (
     <ResponsiveContainer maxWidth="xl">
-      <div className="min-h-screen py-6 sm:py-8">
-        <div className="space-y-6 sm:space-y-8">
-          {/* Header */}
-          <div className="text-center">
-            <Heading level={1} className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Dashboard
-            </Heading>
-            <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
-              Overview of your expenses and spending patterns
-            </p>
-            {currentMonthExpenses.length === 0 && (
-              <div className="mt-6 max-w-md mx-auto p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
-                <p className="text-blue-800 dark:text-blue-200 text-sm">
-                  No expenses found. <a href="/expenses" className="underline hover:no-underline font-medium">Add your first expense</a> to see your dashboard.
+      <div className="space-y-12">
+        {/* Header */}
+        <div>
+          <Heading level={2}>Dashboard</Heading>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 font-light">
+            Overview of your expenses and spending patterns
+          </p>
+          {currentMonthExpenses.length === 0 && (
+            <div className="mt-6 max-w-md p-4 bg-blue-50/50 dark:bg-blue-900/10 border-l-2 border-blue-400 dark:border-blue-500 rounded">
+              <p className="text-blue-700 dark:text-blue-300 text-sm font-light">
+                No expenses found. <a href="/expenses" className="underline hover:no-underline font-medium">Add your first expense</a> to see your dashboard.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Current Month Total and Fixed vs Variable Split */}
+        <div>
+          <h3 className="text-base font-medium text-slate-900 dark:text-slate-100 mb-8 tracking-wide">
+            {getCurrentMonthName()} {getCurrentYear()}
+          </h3>
+          
+          {/* Total Amount - Calculate from Fixed + Variable to match Analytics */}
+          <div className="mb-8">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-normal text-slate-500 dark:text-slate-400 tracking-wide uppercase">
+                  Total Spent This Month
+                </h4>
+                {previousMonthTotal > 0 && (
+                  <span className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded ${
+                    trendPercentage > 0 
+                      ? 'text-red-600 dark:text-red-400' 
+                      : 'text-green-600 dark:text-green-400'
+                  }`}>
+                    <span className="mr-1 text-xs">
+                      {trendPercentage > 0 ? '↗' : '↘'}
+                    </span>
+                    {Math.abs(trendPercentage).toFixed(1)}%
+                  </span>
+                )}
+              </div>
+              <div className="text-4xl font-light text-slate-900 dark:text-slate-100 tracking-tight">
+                {formatCurrency(
+                  fixedVsVariable 
+                    ? fixedVsVariable.fixed.amount + fixedVsVariable.variable.amount
+                    : summary.totalAmount
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {/* Fixed vs Variable Split */}
+          {fixedVsVariable && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-normal text-slate-500 dark:text-slate-400 tracking-wide uppercase">
+                    Fixed Expenses
+                  </h4>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 font-light">
+                    {fixedVsVariable.fixed.percentage.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="text-2xl font-light text-slate-900 dark:text-slate-100 tracking-tight">
+                  {formatCurrency(fixedVsVariable.fixed.amount)}
+                </div>
+                <p className="text-xs text-slate-400 dark:text-slate-500 font-light">
+                  {fixedVsVariable.fixed.count} {fixedVsVariable.fixed.count === 1 ? 'expense' : 'expenses'}
                 </p>
               </div>
-            )}
-          </div>
-
-          {/* Current Month Total Card */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-            <div className="lg:col-span-2">
-              <MetricCard
-                title="Total Spent This Month"
-                value={formatCurrency(summary.totalAmount)}
-                subtitle={`${getCurrentMonthName()} ${getCurrentYear()}`}
-                trend={previousMonthTotal > 0 ? {
-                  value: trendPercentage,
-                  isPositive: trendPercentage > 0
-                } : monthlyTotals.length === 0 ? {
-                  value: 0,
-                  isPositive: true,
-                  isFirstMonth: true
-                } : undefined}
-                className="h-full"
-              />
+              
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-normal text-slate-500 dark:text-slate-400 tracking-wide uppercase">
+                    Variable Expenses
+                  </h4>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 font-light">
+                    {fixedVsVariable.variable.percentage.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="text-2xl font-light text-slate-900 dark:text-slate-100 tracking-tight">
+                  {formatCurrency(fixedVsVariable.variable.amount)}
+                </div>
+                <p className="text-xs text-slate-400 dark:text-slate-500 font-light">
+                  {fixedVsVariable.variable.count} {fixedVsVariable.variable.count === 1 ? 'expense' : 'expenses'}
+                </p>
+              </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-              <MetricCard
-                title="Transactions"
-                value={summary.totalCount}
-                subtitle="This month"
-              />
-              <MetricCard
-                title="Average"
-                value={formatCurrency(summary.averageAmount)}
-                subtitle="Per transaction"
-              />
-            </div>
-          </div>
+          )}
+        </div>
 
-          {/* Expenses by Category & Monthly Totals */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
-            {/* Expenses by Category */}
+        {/* Expenses by Category & Monthly Totals */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-12">
+          {/* Expenses by Category */}
+          <div>
+            <h3 className="text-base font-medium text-slate-900 dark:text-slate-100 mb-8 tracking-wide">
+              Spending by Category
+            </h3>
             <CategoryBar
               data={categoryData}
-              title="Spending by Category"
               subtitle={`Breakdown for ${getCurrentMonthName()}`}
             />
+          </div>
 
-            {/* Monthly Totals */}
+          {/* Monthly Totals */}
+          <div>
+            <h3 className="text-base font-medium text-slate-900 dark:text-slate-100 mb-8 tracking-wide">
+              Monthly Totals
+            </h3>
             <DataTable
               data={monthlyTotals}
               columns={monthlyColumns}
-              title="Monthly Totals"
               subtitle="Spending trends over time"
               emptyMessage="No monthly data available"
             />
           </div>
+        </div>
 
-          {/* Current Month Expenses Table */}
+        {/* Current Month Expenses Table */}
+        <div>
+          <h3 className="text-base font-medium text-slate-900 dark:text-slate-100 mb-8 tracking-wide">
+            Recent Transactions
+          </h3>
           <DataTable
             data={sortedExpenses}
             columns={expenseColumns}
             onSort={handleSort}
             sortKey={sortKey}
             sortDirection={sortDirection}
-            title="Recent Transactions"
             subtitle={`All expenses from ${getCurrentMonthName()} ${getCurrentYear()}`}
             emptyMessage="No expenses recorded this month"
             renderMobileActions={(item) => (

@@ -137,9 +137,20 @@ class ApiService {
   }
 
   // Expenses
-  async getExpenses(limit = 100, offset = 0): Promise<Expense[]> {
-    console.log('API: Getting expenses with limit:', limit, 'offset:', offset);
-    const result = await this.request<Expense[]>(`/expenses?limit=${limit}&offset=${offset}`);
+  async getExpenses(
+    limit = 100, 
+    offset = 0, 
+    startDate?: string, 
+    endDate?: string
+  ): Promise<Expense[]> {
+    const params = new URLSearchParams();
+    params.append('limit', limit.toString());
+    params.append('offset', offset.toString());
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    
+    console.log('API: Getting expenses with limit:', limit, 'offset:', offset, 'startDate:', startDate, 'endDate:', endDate);
+    const result = await this.request<Expense[]>(`/expenses?${params.toString()}`);
     console.log('API: Expenses result:', result);
     return result;
   }
@@ -193,12 +204,128 @@ class ApiService {
     return this.request(`/analytics/summary?${params.toString()}`);
   }
 
-  async getCategoryBreakdown(month?: number, year?: number): Promise<CategoryBreakdown[]> {
+  // Analytics - Trends
+  async getExpenseTrends(
+    startDate?: string,
+    endDate?: string,
+    expenseType?: 'fixed' | 'variable',
+    categories?: string[],
+    minAmount?: number,
+    maxAmount?: number
+  ): Promise<Array<{ month: string; total_amount: number; count: number }>> {
     const params = new URLSearchParams();
-    if (month) params.append('month', month.toString());
-    if (year) params.append('year', year.toString());
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    if (expenseType) params.append('expense_type', expenseType);
+    if (categories && categories.length > 0) params.append('categories', categories.join(','));
+    if (minAmount !== undefined) params.append('min_amount', minAmount.toString());
+    if (maxAmount !== undefined) params.append('max_amount', maxAmount.toString());
+    
+    return this.request(`/analytics/trends?${params.toString()}`);
+  }
+
+  // Analytics - Patterns
+  async getSpendingPatterns(
+    startDate?: string,
+    endDate?: string,
+    expenseType?: 'fixed' | 'variable',
+    categories?: string[],
+    minAmount?: number,
+    maxAmount?: number
+  ): Promise<{
+    day_of_week: Array<{
+      day: string;
+      day_index: number;
+      total_amount: number;
+      count: number;
+      average: number;
+    }>;
+    time_of_month: Array<{
+      period: string;
+      total_amount: number;
+      count: number;
+      average: number;
+    }>;
+  }> {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    if (expenseType) params.append('expense_type', expenseType);
+    if (categories && categories.length > 0) params.append('categories', categories.join(','));
+    if (minAmount !== undefined) params.append('min_amount', minAmount.toString());
+    if (maxAmount !== undefined) params.append('max_amount', maxAmount.toString());
+    
+    return this.request(`/analytics/patterns?${params.toString()}`);
+  }
+
+  // Analytics - Top Categories with Trends
+  async getTopCategoriesWithTrends(
+    startDate?: string,
+    endDate?: string,
+    expenseType?: 'fixed' | 'variable',
+    categories?: string[],
+    minAmount?: number,
+    maxAmount?: number,
+    limit: number = 10
+  ): Promise<Array<{
+    category: string;
+    current_amount: number;
+    previous_amount: number;
+    count: number;
+    trend_percentage: number;
+    trend_direction: 'up' | 'down' | 'stable';
+  }>> {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    if (expenseType) params.append('expense_type', expenseType);
+    if (categories && categories.length > 0) params.append('categories', categories.join(','));
+    if (minAmount !== undefined) params.append('min_amount', minAmount.toString());
+    if (maxAmount !== undefined) params.append('max_amount', maxAmount.toString());
+    params.append('limit', limit.toString());
+    
+    return this.request(`/analytics/top-categories?${params.toString()}`);
+  }
+
+  // Analytics - Category Breakdown (updated to accept filters)
+  async getCategoryBreakdown(
+    startDate?: string,
+    endDate?: string,
+    expenseType?: 'fixed' | 'variable',
+    categories?: string[],
+    minAmount?: number,
+    maxAmount?: number
+  ): Promise<CategoryBreakdown[]> {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    if (expenseType) params.append('expense_type', expenseType);
+    if (categories && categories.length > 0) params.append('categories', categories.join(','));
+    if (minAmount !== undefined) params.append('min_amount', minAmount.toString());
+    if (maxAmount !== undefined) params.append('max_amount', maxAmount.toString());
     
     return this.request(`/analytics/categories?${params.toString()}`);
+  }
+
+  // Analytics - Fixed vs Variable Comparison
+  async getFixedVsVariableComparison(
+    startDate?: string,
+    endDate?: string,
+    categories?: string[],
+    minAmount?: number,
+    maxAmount?: number
+  ): Promise<{
+    fixed: { amount: number; count: number; percentage: number };
+    variable: { amount: number; count: number; percentage: number };
+  }> {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    if (categories && categories.length > 0) params.append('categories', categories.join(','));
+    if (minAmount !== undefined) params.append('min_amount', minAmount.toString());
+    if (maxAmount !== undefined) params.append('max_amount', maxAmount.toString());
+    
+    return this.request(`/analytics/fixed-vs-variable?${params.toString()}`);
   }
 
   // Fixed Expenses

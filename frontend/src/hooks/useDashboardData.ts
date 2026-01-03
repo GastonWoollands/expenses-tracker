@@ -5,6 +5,8 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { apiService, type Expense } from '../services/api';
+import { startOfMonth, endOfMonth } from 'date-fns';
+import { formatDateForAPI } from '../utils/analytics';
 
 export interface ExpenseSummary {
   totalAmount: number;
@@ -20,7 +22,7 @@ export interface MonthlyTotal {
   trend?: number; // percentage change from previous month
 }
 
-export function useExpenses() {
+export function useExpenses(startDate?: Date, endDate?: Date) {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,8 +31,12 @@ export function useExpenses() {
     try {
       setLoading(true);
       setError(null);
-      console.log('Fetching expenses...');
-      const data = await apiService.getExpenses(100, 0);
+      console.log('Fetching expenses...', { startDate, endDate });
+      
+      const startDateStr = startDate ? formatDateForAPI(startDate) : undefined;
+      const endDateStr = endDate ? formatDateForAPI(endDate) : undefined;
+      
+      const data = await apiService.getExpenses(1000, 0, startDateStr, endDateStr);
       console.log('Expenses fetched:', data);
       
       // Ensure data is an array
@@ -45,7 +51,7 @@ export function useExpenses() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [startDate, endDate]);
 
   // Initialize on first mount
   useEffect(() => {
@@ -61,39 +67,23 @@ export function useExpenses() {
 }
 
 export function useCurrentMonthExpenses() {
-  const { expenses, loading, error, refetch } = useExpenses();
+  // Calculate current month date range
+  const currentMonthRange = useMemo(() => {
+    const now = new Date();
+    return {
+      startDate: startOfMonth(now),
+      endDate: endOfMonth(now)
+    };
+  }, []);
   
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
+  // Fetch expenses for current month only (backend filtering)
+  const { expenses, loading, error, refetch } = useExpenses(
+    currentMonthRange.startDate,
+    currentMonthRange.endDate
+  );
   
-  // Safety check: ensure expenses is an array and filter safely
-  const safeExpenses = Array.isArray(expenses) ? expenses : [];
-  
-  const currentMonthExpenses = useMemo(() => {
-    return safeExpenses.filter(expense => {
-      try {
-        if (!expense || !expense.date) return false;
-        const expenseDate = new Date(expense.date);
-        // Check if date is valid
-        if (isNaN(expenseDate.getTime())) return false;
-        return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
-      } catch (err) {
-        console.warn('Error processing expense date:', err, expense);
-        return false;
-      }
-    });
-  }, [safeExpenses, currentMonth, currentYear]);
-
-  console.log('Current month expenses:', {
-    currentMonth,
-    currentYear,
-    totalExpenses: safeExpenses.length,
-    currentMonthExpenses: currentMonthExpenses.length,
-    currentMonthTotal: currentMonthExpenses.reduce((sum, exp) => {
-      const amount = typeof exp.amount === 'number' ? exp.amount : 0;
-      return sum + amount;
-    }, 0)
-  });
+  // Expenses are already filtered by backend, but keep as-is for compatibility
+  const currentMonthExpenses = expenses;
 
   return { 
     expenses: currentMonthExpenses, 

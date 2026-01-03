@@ -66,19 +66,11 @@ class SchedulerService:
     async def get_all_users_with_fixed_expenses(self) -> List[str]:
         """Get list of all user IDs who have active fixed expenses"""
         try:
-            # Check if is_fixed column exists
-            has_is_fixed = await self.fixed_expense_service._has_is_fixed_column()
-            if not has_is_fixed:
-                logger.warning("is_fixed column does not exist, skipping fixed expenses application")
-                return []
-            
-            # Get distinct user IDs who have active fixed expenses
+            # Get distinct user IDs who have active fixed expenses from fixed_expenses table
             query = """
                 SELECT DISTINCT user_id
-                FROM transactions
-                WHERE is_fixed = true
-                AND is_active = true
-                AND type = 'expense'
+                FROM fixed_expenses
+                WHERE is_active = true
             """
             
             results = await self.neon.fetch(query)

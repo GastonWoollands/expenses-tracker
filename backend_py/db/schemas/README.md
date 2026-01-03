@@ -2,7 +2,7 @@
 
 This directory contains the PostgreSQL database schema for the Expenses Tracker application, designed for Supabase migration from SQLite.
 
-## 📁 File Structure
+## File Structure
 
 ```
 db/schemas/
@@ -16,13 +16,14 @@ db/schemas/
 ├── budgets.sql                  # Budget management
 ├── user_income.sql              # Income tracking
 ├── transactions.sql             # Core financial transactions
+├── fixed_expenses.sql           # Recurring expense templates
 ├── exchange_rates.sql           # Currency conversion rates
 ├── transaction_attachments.sql  # File attachments
 ├── audit_log.sql               # Data change tracking
 └── triggers.sql                # Database triggers and functions
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Option 1: Standalone Schema (Recommended)
 Use the complete `schema.sql` file for easy deployment:
@@ -40,7 +41,7 @@ Use the modular approach with `index.sql`:
 psql -d your_database -f index.sql
 ```
 
-## 🗄️ Database Schema Overview
+## Database Schema Overview
 
 ### Core Tables
 
@@ -53,6 +54,7 @@ psql -d your_database -f index.sql
 | `budgets` | Budget management | Category-based, period-based |
 | `user_income` | Income tracking | Multiple sources, flexible periods |
 | `transactions` | Core financial data | Expenses, income, transfers |
+| `fixed_expenses` | Recurring expense templates | Templates for scheduled expenses |
 
 ### Supporting Tables
 
@@ -62,7 +64,7 @@ psql -d your_database -f index.sql
 | `transaction_attachments` | File attachments | Receipts, invoices, documents |
 | `audit_log` | Change tracking | Complete audit trail |
 
-## 🔗 Relationships
+## Relationships
 
 ```mermaid
 erDiagram
@@ -70,6 +72,8 @@ erDiagram
     users ||--o{ budgets : creates
     users ||--o{ user_income : earns
     users ||--o{ transactions : makes
+    users ||--o{ fixed_expenses : defines
+    fixed_expenses ||--o{ transactions : generates
     currencies ||--o{ user_profiles : default
     currencies ||--o{ budgets : denominated_in
     currencies ||--o{ user_income : denominated_in
@@ -82,7 +86,7 @@ erDiagram
     transactions ||--o{ transaction_attachments : has
 ```
 
-## 🎯 Key Design Features
+## Key Design Features
 
 ### 1. **UUID Primary Keys**
 - All tables use UUID primary keys with `uuid_generate_v4()`
@@ -111,21 +115,26 @@ erDiagram
 
 ### 6. **Rich Transaction Data**
 - Unified table for expenses, income, and transfers
-- Support for recurring transactions
 - Tags and metadata for organization
 - File attachment support
 
-### 7. **Audit Trail**
+### 7. **Fixed Expenses**
+- Separate `fixed_expenses` table for recurring expense templates
+- Supports daily, weekly, monthly, and yearly intervals
+- Templates are applied by scheduler to create actual transactions
+- Keeps `transactions` table clean with only actual spending records
+
+### 8. **Audit Trail**
 - Complete change tracking via `audit_log` table
 - Automatic triggers for INSERT/UPDATE/DELETE operations
 - JSONB storage for flexible data capture
 
-### 8. **Row Level Security (RLS)**
+### 9. **Row Level Security (RLS)**
 - Supabase-compatible security policies
 - Users can only access their own data
 - Firebase UID-based authentication
 
-## 📊 Performance Optimizations
+## Performance Optimizations
 
 ### Indexes
 - **Primary indexes**: All foreign keys and frequently queried columns
@@ -137,7 +146,7 @@ erDiagram
 - `transaction_summary`: Pre-joined transaction data with category/currency info
 - `budget_vs_actual`: Real-time budget performance calculations
 
-## 🔒 Security Features
+## Security Features
 
 ### Row Level Security Policies
 ```sql
@@ -152,7 +161,7 @@ USING (auth.uid()::text = (SELECT firebase_uid FROM users WHERE id = user_id));
 - ENUM constraints on transaction types
 - Foreign key constraints with appropriate CASCADE/SET NULL actions
 
-## 🚀 Migration from SQLite
+## Migration from SQLite
 
 ### Key Improvements
 1. **Better Data Types**: Proper DECIMAL for money, TIMESTAMPTZ for dates
@@ -169,7 +178,7 @@ USING (auth.uid()::text = (SELECT firebase_uid FROM users WHERE id = user_id));
 4. **Update application** to use new schema
 5. **Test thoroughly** with existing data
 
-## 🔧 Extensibility
+## Extensibility
 
 ### Adding New Tables
 The schema is designed for easy extension:
@@ -202,7 +211,7 @@ CREATE POLICY "Users can manage own custom data"
 ### Adding New Fields
 All tables include `metadata JSONB` fields where appropriate for flexible data storage.
 
-## 📈 Analytics and Reporting
+## Analytics and Reporting
 
 ### Built-in Views
 - **Transaction Summary**: Pre-joined data for dashboards
@@ -224,7 +233,7 @@ SELECT * FROM budget_vs_actual
 WHERE user_id = $1 AND percentage_used > 80;
 ```
 
-## 🛠️ Maintenance
+## Maintenance
 
 ### Regular Tasks
 1. **Exchange Rate Updates**: Update `exchange_rates` table daily
@@ -235,12 +244,6 @@ WHERE user_id = $1 AND percentage_used > 80;
 - Use Supabase dashboard for query performance
 - Monitor `audit_log` table for data changes
 - Check `exchange_rates` for currency conversion accuracy
-
-## 📚 Additional Resources
-
-- [Supabase Documentation](https://supabase.com/docs)
-- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
-- [Row Level Security Guide](https://supabase.com/docs/guides/auth/row-level-security)
 
 ---
 
