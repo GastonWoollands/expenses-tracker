@@ -471,6 +471,7 @@ const Dashboard: React.FC = () => {
             </h3>
             <CategoryBar
               data={categoryData}
+              expenses={currentMonthExpenses}
               subtitle={`Breakdown for ${getCurrentMonthName()}`}
             />
           </div>
