@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { ResponsiveContainer, Heading, DataTable, CategoryBar, EditExpenseModal, Toast } from '../components';
+import ExpenseChat from '../components/ui/ExpenseChat';
 import type { Column, SortDirection } from '../components/ui/DataTable';
 import { useCurrentMonthExpenses, useExpenseSummary, useMonthlyTotals, useExpenses } from '../hooks/useDashboardData';
 import { formatCurrency, formatDateShort, getCurrentMonthName, getCurrentYear, calculatePercentage, sortByKey, getPreviousMonth, calculateTrendPercentage } from '../utils/formatters';
@@ -547,6 +548,9 @@ const Dashboard: React.FC = () => {
           onClose={() => setToast(null)}
         />
       )}
+
+      {/* Expense Chat Assistant */}
+      <ExpenseChat />
     </ResponsiveContainer>
   );
 };

@@ -14,6 +14,7 @@ class NeonConfig:
     """Neon PostgreSQL configuration management with connection pooling"""
     
     _pool: Optional[asyncpg.Pool] = None
+    _read_only_pool: Optional[asyncpg.Pool] = None
     
     def __init__(self):
         self.database_url = os.getenv("DATABASE_URL")
@@ -39,8 +40,36 @@ class NeonConfig:
                 raise
         return self._pool
     
+    async def get_read_only_pool(self) -> asyncpg.Pool:
+        """Get or create read-only connection pool for chatbot queries."""
+        if self._read_only_pool is None:
+            try:
+                self._read_only_pool = await asyncpg.create_pool(
+                    self.database_url,
+                    min_size=2,
+                    max_size=5,
+                    command_timeout=10,
+                    max_queries=10000,
+                    max_inactive_connection_lifetime=300.0,
+                    server_settings={'default_transaction_read_only': 'true'}
+                )
+                logger.info("Read-only database connection pool created")
+            except Exception as e:
+                logger.error(f"Failed to create read-only connection pool: {e}")
+                raise
+        return self._read_only_pool
+    
     async def close_pool(self):
-        """Close connection pool"""
+        """Close connection pools"""
+        if self._read_only_pool:
+            try:
+                await self._read_only_pool.close()
+                logger.info("Read-only database connection pool closed")
+            except Exception as e:
+                logger.error(f"Error closing read-only connection pool: {e}")
+            finally:
+                self._read_only_pool = None
+        
         if self._pool:
             try:
                 await self._pool.close()
