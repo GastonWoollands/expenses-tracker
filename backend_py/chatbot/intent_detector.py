@@ -112,7 +112,7 @@ class IntentDetector:
             return "query"
 
         logger.info("Intent detected: unknown")
-        return "unknown"
+        return "query"
 
     def _has_amount_pattern(self, text: str) -> bool:
         """Check if text contains an amount pattern that suggests expense logging."""
