@@ -404,6 +404,23 @@ class ApiService {
       body: JSON.stringify(profile),
     });
   }
+
+  // Chatbot
+  async queryChatbot(
+    question: string,
+    history?: Array<{ user: string; bot: string }>
+  ): Promise<{
+    answer: string;
+    intent: string;
+    should_log_expense: boolean;
+    data?: Array<Record<string, any>>;
+    error?: string;
+  }> {
+    return this.request('/api/v1/chatbot/query', {
+      method: 'POST',
+      body: JSON.stringify({ question, history }),
+    });
+  }
 }
 
 export const apiService = new ApiService();

@@ -322,6 +322,26 @@ class WhatsAppService:
                 logger.warning("No message text to process")
                 return
             
+            # Detect intent: query or expense
+            from chatbot.service import get_chatbot_service
+            chatbot = get_chatbot_service()
+            chatbot_response = await chatbot.process_message(message_text, user_id)
+            
+            # Handle query intent - send chatbot response
+            if chatbot_response.intent == "query":
+                logger.info(f"Query intent detected, sending chatbot response")
+                await self.send_whatsapp_reply(from_number, chatbot_response.answer)
+                return
+            
+            # Handle greeting intent
+            if chatbot_response.intent == "greeting":
+                logger.info(f"Greeting intent detected")
+                await self.send_whatsapp_reply(from_number, chatbot_response.answer)
+                return
+            
+            # Handle expense intent or unknown (try to log as expense)
+            logger.info(f"Expense intent detected, classifying expense")
+            
             # Classify expense
             logger.info(f"Classifying text with LLM: {message_text}")
             result = await self.classify_expense(message_text)
