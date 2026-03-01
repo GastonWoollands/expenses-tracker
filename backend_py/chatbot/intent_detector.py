@@ -16,9 +16,11 @@ class IntentDetector:
 
     QUERY_PATTERNS = [
         r"(?:how much|cuánto|cuanto)",
+        r"(?:how much|cuánto|cuanto gaste|cuánto gasté|cuánto gastó)",
         r"(?:show me|muéstrame|muestra)",
+        r"(?:show me|muéstrame|muestra|mostrame detalles|mostrame los detalles)",
         r"(?:what|qué|que).+(?:spend|spent|gast[oé])",
-        r"(?:compare|comparar|comparison)",
+        r"(?:compare|comparar|comparison|comparame)",
         r"(?:total|sum|suma)",
         r"(?:average|promedio|avg)",
         r"(?:which|cuál|cual).+(?:category|categoría)",
