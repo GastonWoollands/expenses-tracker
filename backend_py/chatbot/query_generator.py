@@ -60,7 +60,7 @@ class QueryGenerator:
 
             if sql:
                 sql = self._ensure_user_id_placeholder(sql)
-                logger.info(f"Generated SQL: {sql[:100]}...")
+                logger.info(f"Generated SQL: {sql}...")
             else:
                 logger.warning("Failed to extract SQL from LLM response")
 

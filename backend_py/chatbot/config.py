@@ -7,45 +7,67 @@ import json
 
 LLM_MODEL = os.getenv("GEMINI_MODEL_CHATBOT", "gemini-2.0-flash")
 
+# database/schema.sql
 EXPENSE_SCHEMA = {
     "transactions": {
         "description": "User expenses and income transactions",
         "columns": {
             "id": "UUID primary key",
-            "user_id": "User identifier (ALWAYS filter by this)",
-            "account_id": "Account reference",
-            "category_id": "Category reference (join with categories table)",
-            "type": "Transaction type: 'expense' or 'income'",
-            "amount": "Transaction amount (NUMERIC, always positive)",
-            "currency": "Currency code (EUR, USD, etc.)",
-            "description": "Transaction description text",
-            "occurred_at": "When the transaction happened (TIMESTAMP)",
-            "created_at": "Record creation timestamp",
-            "is_fixed": "Whether this is a fixed/recurring expense (BOOLEAN)",
+            "user_id": "User identifier TEXT (ALWAYS filter by this; Firebase UID)",
+            "account_id": "UUID reference to accounts(id)",
+            "category_id": "UUID reference to categories(id)",
+            "type": "Transaction type: 'expense', 'income', or 'transfer'",
+            "amount": "NUMERIC(12,2), always positive",
+            "currency": "TEXT (e.g. EUR, USD)",
+            "description": "TEXT",
+            "occurred_at": "TIMESTAMP when the transaction happened",
+            "created_at": "TIMESTAMP",
         },
         "user_filter": "user_id",
     },
     "categories": {
-        "description": "Expense and income categories",
+        "description": "Income and expense categories (user_id NULL = global category)",
         "columns": {
             "id": "UUID primary key",
-            "name": "Category name (e.g., 'Food', 'Transport', 'Shopping')",
+            "user_id": "TEXT reference to users(id), nullable for global categories",
+            "name": "Category name (e.g. Food, Transport, Shopping)",
             "type": "Category type: 'expense' or 'income'",
-            "key": "Category key identifier",
+            "icon": "TEXT",
+            "created_at": "TIMESTAMP",
         },
     },
-    "fixed_expenses": {
-        "description": "Recurring fixed expense templates",
+    "accounts": {
+        "description": "User accounts (cash, bank, credit card, wallet)",
         "columns": {
             "id": "UUID primary key",
-            "user_id": "User identifier (ALWAYS filter by this)",
-            "category_id": "Category reference",
-            "amount": "Fixed amount",
-            "currency": "Currency code",
-            "description": "Description text",
-            "fixed_interval": "Interval: 'daily', 'weekly', 'monthly', 'yearly'",
-            "fixed_day_of_month": "Day of month for monthly expenses (1-31)",
-            "is_active": "Whether the fixed expense is active",
+            "user_id": "TEXT reference to users(id)",
+            "name": "Account name",
+            "type": "TEXT: 'cash', 'bank', 'credit_card', 'wallet', 'other'",
+            "currency": "TEXT",
+            "created_at": "TIMESTAMP",
+        },
+        "user_filter": "user_id",
+    },
+    "budgets": {
+        "description": "Budgets by category and period per user",
+        "columns": {
+            "id": "UUID primary key",
+            "user_id": "TEXT reference to users(id)",
+            "category_id": "UUID reference to categories(id)",
+            "amount": "NUMERIC(12,2)",
+            "period": "TEXT: 'daily', 'weekly', 'monthly', 'yearly'",
+            "created_at": "TIMESTAMP",
+        },
+        "user_filter": "user_id",
+    },
+    "user_income": {
+        "description": "Target/expected monthly income per user",
+        "columns": {
+            "user_id": "TEXT primary key reference to users(id)",
+            "monthly_income": "NUMERIC(12,2)",
+            "currency": "TEXT",
+            "created_at": "TIMESTAMP",
+            "updated_at": "TIMESTAMP",
         },
         "user_filter": "user_id",
     },
@@ -63,6 +85,8 @@ CRITICAL REQUIREMENTS:
 4. For dates use the occurred_at column. Join categories with: LEFT JOIN categories c ON t.category_id = c.id.
 5. Use meaningful aliases for aggregations. Limit to 100 rows. Return ONLY the SQL, no markdown or explanation.
 6. For "this/those/same category/related to this", use CONVERSATION HISTORY to resolve (e.g. previous "travel" → filter by travel category).
+7. For budget questions use the budgets table (filter by b.user_id = '{{{{user_id}}}}'). For monthly/expected income use user_income (filter by user_id).
+8. For category filters, use a short stem (e.g. 'other' for 'others', 'transport' for 'transports') so that the LIKE matches the actual category name in the database.”
 
 MAP USER EXPRESSIONS TO SQL (use these patterns):
 
