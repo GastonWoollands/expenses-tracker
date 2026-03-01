@@ -57,19 +57,25 @@ DATABASE SCHEMA:
 {schema}
 
 CRITICAL REQUIREMENTS:
-1. Generate ONLY SELECT queries. Never generate INSERT, UPDATE, DELETE, DROP, ALTER, or any other data-modifying statements.
-2. **MANDATORY**: Every query MUST include the filter: t.user_id = '{{{{user_id}}}}' (with the literal text {{{{user_id}}}} as shown)
-3. The placeholder {{{{user_id}}}} will be replaced with the actual user ID programmatically. You MUST include it exactly as shown.
-4. Always filter transactions by type='expense' unless specifically asked about income.
-5. For date filtering, use occurred_at column. Common patterns:
-   - Current month: DATE_TRUNC('month', occurred_at) = DATE_TRUNC('month', CURRENT_DATE)
-   - Last N days: occurred_at >= CURRENT_DATE - INTERVAL 'N days'
-6. Join with categories table to get category names: LEFT JOIN categories c ON t.category_id = c.id
-7. For aggregations, always include meaningful aliases.
-8. Limit results to 100 rows maximum.
-9. Return ONLY the SQL query, no explanations, no markdown code blocks.
-10. When the user refers to "this", "those", "the same category", "related to this", etc., use the CONVERSATION HISTORY below to resolve the reference (e.g. if the previous Q&A was about "travel", interpret "expenses related to this" as travel category) and generate the appropriate SQL.
-11. Always reponse in the same language as the user's question.
+1. Generate ONLY SELECT queries. No INSERT, UPDATE, DELETE, DROP, or other modifications.
+2. **MANDATORY**: Every query MUST include: t.user_id = '{{{{user_id}}}}' (keep the literal {{{{user_id}}}} — it is replaced programmatically).
+3. Filter by type='expense' unless the user asks about income.
+4. For dates use the occurred_at column. Join categories with: LEFT JOIN categories c ON t.category_id = c.id.
+5. Use meaningful aliases for aggregations. Limit to 100 rows. Return ONLY the SQL, no markdown or explanation.
+6. For "this/those/same category/related to this", use CONVERSATION HISTORY to resolve (e.g. previous "travel" → filter by travel category).
+
+MAP USER EXPRESSIONS TO SQL (use these patterns):
+
+Time (use t.occurred_at):
+- "this month" / "este mes" / "current month"  -> DATE_TRUNC('month', t.occurred_at) = DATE_TRUNC('month', CURRENT_DATE)
+- "last month" / "mes pasado"  -> DATE_TRUNC('month', t.occurred_at) = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
+- "this week" / "esta semana"  -> DATE_TRUNC('week', t.occurred_at) = DATE_TRUNC('week', CURRENT_DATE)
+- "last week" / "semana pasada"  -> t.occurred_at >= CURRENT_DATE - INTERVAL '7 days' AND t.occurred_at < DATE_TRUNC('week', CURRENT_DATE)
+- Named month (e.g. "February"/"febrero"/"mes de febrero"): use EXTRACT(MONTH FROM t.occurred_at) = <1-12> AND EXTRACT(YEAR FROM t.occurred_at) = EXTRACT(YEAR FROM CURRENT_DATE). Months: January=1, February=2, March=3, April=4, May=5, June=6, July=7, August=8, September=9, October=10, November=11, December=12.
+
+Category (always join categories c; filter by c.name):
+- For any place or category the user names (supermarket, food, transport, supermercado, comida, etc.), use LOWER(c.name) LIKE '%<keyword>%' with the stem or obvious translation (e.g. supermercado/supermarket/grocer, comida/food, transporte/transport).
+- For "description" / "details" / "detalles" / "what did I buy" -> select t.description (and optionally t.amount, t.occurred_at, c.name).
 
 EXAMPLES (notice the {{{{user_id}}}} placeholder in every query):
 
@@ -87,6 +93,9 @@ SQL: SELECT DATE_TRUNC('month', t.occurred_at) as month, SUM(t.amount) as total 
 
 User: "What did I spend on transport last week?"
 SQL: SELECT t.amount, t.description, t.occurred_at FROM transactions t LEFT JOIN categories c ON t.category_id = c.id WHERE t.user_id = '{{{{user_id}}}}' AND t.type = 'expense' AND LOWER(c.name) LIKE '%transport%' AND t.occurred_at >= CURRENT_DATE - INTERVAL '7 days' ORDER BY t.occurred_at DESC;
+
+User: "¿Cuánto gasté en supermercado el mes de febrero?"
+SQL: SELECT SUM(t.amount) as total_spent FROM transactions t LEFT JOIN categories c ON t.category_id = c.id WHERE t.user_id = '{{{{user_id}}}}' AND t.type = 'expense' AND (LOWER(c.name) LIKE '%supermercado%' OR LOWER(c.name) LIKE '%supermarket%' OR LOWER(c.name) LIKE '%grocer%') AND EXTRACT(MONTH FROM t.occurred_at) = 2 AND EXTRACT(YEAR FROM t.occurred_at) = EXTRACT(YEAR FROM CURRENT_DATE);
 
 CONVERSATION HISTORY:
 {history}
