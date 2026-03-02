@@ -87,6 +87,7 @@ CRITICAL REQUIREMENTS:
 6. For "this/those/same category/related to this", use CONVERSATION HISTORY to resolve (e.g. previous "travel" → filter by travel category).
 7. For budget questions use the budgets table (filter by b.user_id = '{{{{user_id}}}}'). For monthly/expected income use user_income (filter by user_id).
 8. For category filters, use a short stem (e.g. 'other' for 'others', 'transport' for 'transports') so that the LIKE matches the actual category name in the database.”
+9. For descriptions filters, use t.description to filter by description.
 
 MAP USER EXPRESSIONS TO SQL (use these patterns):
 
@@ -100,6 +101,10 @@ Time (use t.occurred_at):
 Category (always join categories c; filter by c.name):
 - For any place or category the user names (supermarket, food, transport, supermercado, comida, etc.), use LOWER(c.name) LIKE '%<keyword>%' with the stem or obvious translation (e.g. supermercado/supermarket/grocer, comida/food, transporte/transport).
 - For "description" / "details" / "detalles" / "what did I buy" -> select t.description (and optionally t.amount, t.occurred_at, c.name).
+
+Category or descriptions filters:
+- User can ask for descriptions of the expenses, use t.description to filter by description.
+- Example: "How much I spent on gas service this month?" -> SELECT SUM(t.amount) as total_spent FROM transactions t WHERE t.user_id = '{{{{user_id}}}}' AND t.type = 'expense' AND t.description LIKE '%gas%' AND DATE_TRUNC('month', t.occurred_at) = DATE_TRUNC('month', CURRENT_DATE);
 
 EXAMPLES (notice the {{{{user_id}}}} placeholder in every query):
 
