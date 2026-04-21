@@ -27,7 +27,7 @@ def get_agent() -> Agent:
     """Create and cache the LLM agent."""
     try:
         return Agent(
-            model=Gemini(id=GEMINI_MODEL_BOT_EXPENSES or "gemini-2.0-flash"),
+            model=Gemini(id=GEMINI_MODEL_BOT_EXPENSES),
             markdown=True,
         )
     except Exception as e:

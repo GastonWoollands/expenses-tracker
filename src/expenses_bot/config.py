@@ -29,7 +29,7 @@ if missing:
 # TELEGRAM_USER_ID = os.getenv("TELEGRAM_USER_ID")
 GSHEETS_SHEET_NAME = os.getenv("GSHEETS_SHEET_NAME", "Expenses")
 GSHEETS_EMAIL = os.getenv("GSHEETS_EMAIL")
-GEMINI_MODEL_BOT_EXPENSES = os.getenv("GEMINI_MODEL_BOT_EXPENSES", "gemini-2.0-flash")
+GEMINI_MODEL_BOT_EXPENSES = os.getenv("GEMINI_MODEL_BOT_EXPENSES", "gemini-2.5-flash")
 GSHEETS_CREDENTIALS = os.getenv("GSHEETS_CREDENTIALS")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
