@@ -154,7 +154,7 @@ FIREBASE_CREDENTIALS_PATH=/path/to/firebase-credentials.json
 
 # Optional: AI Classification
 GEMINI_API_KEY=your_gemini_api_key
-GEMINI_MODEL_BOT_EXPENSES=gemini-2.0-flash
+GEMINI_MODEL_BOT_EXPENSES=gemini-2.5-flash
 
 # Optional: Google Sheets Integration
 GSHEETS_CREDENTIALS=/path/to/sheets-credentials.json

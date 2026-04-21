@@ -14,7 +14,7 @@ from agno.models.google import Gemini
 logger = logging.getLogger(__name__)
 
 # Get Gemini model from environment
-GEMINI_MODEL = os.getenv("GEMINI_MODEL_BOT_EXPENSES", "gemini-2.0-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL_BOT_EXPENSES", "gemini-2.5-flash")
 
 
 @lru_cache(maxsize=1)

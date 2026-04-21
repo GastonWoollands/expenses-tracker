@@ -5,7 +5,7 @@ Chatbot configuration and database schema definition.
 import os
 import json
 
-LLM_MODEL = os.getenv("GEMINI_MODEL_CHATBOT", "gemini-2.0-flash")
+LLM_MODEL = os.getenv("GEMINI_MODEL_CHATBOT", "gemini-2.5-flash")
 
 # database/schema.sql
 EXPENSE_SCHEMA = {
