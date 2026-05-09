@@ -1,9 +1,18 @@
 /**
- * FixedVsVariableChart: Bar/Pie chart comparing fixed vs variable expenses
+ * FixedVsVariableChart: Dot plot + comparison summary — no bar/pie
  */
 
 import React, { useMemo } from 'react';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import {
+  Scatter,
+  ScatterChart,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from 'recharts';
 import { formatCurrency } from '../../utils/formatters';
 import { useTheme } from '../../contexts/ThemeContext';
 import { getChartPalette } from '../../utils/chartPalette';
@@ -15,115 +24,95 @@ interface FixedVsVariableData {
 
 interface FixedVsVariableChartProps {
   data: FixedVsVariableData;
-  type?: 'pie' | 'bar';
   className?: string;
 }
 
-const FixedVsVariableChart: React.FC<FixedVsVariableChartProps> = ({
-  data,
-  type = 'bar',
-  className = '',
-}) => {
+const FixedVsVariableChart: React.FC<FixedVsVariableChartProps> = ({ data, className = '' }) => {
   const { resolvedTheme, visualTheme } = useTheme();
   const pal = useMemo(() => getChartPalette(resolvedTheme, visualTheme), [resolvedTheme, visualTheme]);
 
-  const chartData = [
-    {
-      type: 'Fixed',
-      amount: data.fixed.amount,
-      count: data.fixed.count,
-      percentage: data.fixed.percentage,
-    },
-    {
-      type: 'Variable',
-      amount: data.variable.amount,
-      count: data.variable.count,
-      percentage: data.variable.percentage,
-    },
-  ];
-
-  const segmentColors = [pal.barPrimary, pal.barSecondary];
   const total = data.fixed.amount + data.variable.amount;
   const tooltipStyle = { ...pal.tooltip };
 
-  if (total === 0) {
-    return (
-      <div className={`flex items-center justify-center h-80 ${className}`}>
-        <p className="text-fg-muted text-sm font-light">No data available</p>
-      </div>
-    );
-  }
+  const chartData = useMemo(
+    () => [
+      { label: 'Fixed', amount: data.fixed.amount, fill: pal.barPrimary, count: data.fixed.count },
+      { label: 'Variable', amount: data.variable.amount, fill: pal.barSecondary, count: data.variable.count },
+    ],
+    [data.fixed.amount, data.fixed.count, data.variable.amount, data.variable.count, pal.barPrimary, pal.barSecondary],
+  );
 
-  if (type === 'pie') {
+  if (total <= 0) {
     return (
-      <div className={className}>
-        <ResponsiveContainer width="100%" height={320}>
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={(props: any) => {
-                const { payload } = props;
-                return `${payload.type}: ${payload.percentage.toFixed(1)}%`;
-              }}
-              outerRadius={100}
-              fill={pal.barPrimary}
-              dataKey="amount"
-            >
-              {chartData.map((_entry, index) => (
-                <Cell key={`cell-${index}`} fill={segmentColors[index % segmentColors.length]} />
-              ))}
-            </Pie>
-            <Tooltip
-              contentStyle={tooltipStyle}
-              formatter={(value: number) => formatCurrency(value)}
-              labelStyle={{ fontSize: '11px', fontWeight: 500, color: pal.label }}
-            />
-            <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 300 }} />
-          </PieChart>
-        </ResponsiveContainer>
+      <div className={`flex h-56 items-center justify-center rounded-[var(--radius-card)] border border-border bg-surface-raised ${className}`}>
+        <p className="text-sm font-light text-fg-muted">No fixed or variable totals for this period.</p>
       </div>
     );
   }
 
   return (
-    <div className={className}>
-      <ResponsiveContainer width="100%" height={320}>
-        <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke={pal.grid} strokeOpacity={0.5} />
-          <XAxis dataKey="type" stroke={pal.axis} style={{ fontSize: '11px', fontWeight: 300 }} />
-          <YAxis
-            stroke={pal.axis}
-            style={{ fontSize: '11px', fontWeight: 300 }}
-            tickFormatter={(value) => formatCurrency(value)}
-          />
-          <Tooltip
-            contentStyle={tooltipStyle}
-            formatter={(value: number) => formatCurrency(value)}
-            labelStyle={{ fontSize: '11px', fontWeight: 500, color: pal.label }}
-          />
-          <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 300 }} />
-          <Bar dataKey="amount" radius={[0, 0, 0, 0]}>
-            {chartData.map((_entry, index) => (
-              <Cell key={`cell-${index}`} fill={segmentColors[index % segmentColors.length]} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+    <div className={`space-y-5 ${className}`}>
+      <p className="text-sm font-light leading-relaxed text-fg-muted">
+        Fixed costs repeat on a schedule; variable costs change month to month.{' '}
+        <span className="font-medium text-fg">
+          {data.fixed.percentage.toFixed(0)}% fixed
+        </span>
+        ,{' '}
+        <span className="font-medium text-fg">{data.variable.percentage.toFixed(0)}% variable</span>
+        {' — '}
+        <span className="tabular-nums text-fg">{formatCurrency(total)}</span> combined.
+      </p>
 
-      <div className="mt-6 flex gap-8 justify-center text-sm">
-        <div className="text-center">
-          <div className="text-fg-muted text-xs font-light mb-1">Fixed</div>
-          <div className="text-fg font-light">{formatCurrency(data.fixed.amount)}</div>
-          <div className="text-fg-muted text-xs font-light mt-1">{data.fixed.percentage.toFixed(1)}%</div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="rounded-[var(--radius-card)] border border-border bg-surface-raised p-4 shadow-[var(--shadow-card)]">
+          <p className="text-xs font-medium uppercase tracking-wide text-fg-muted">Fixed</p>
+          <p className="mt-1 text-xl font-semibold tabular-nums text-fg">{formatCurrency(data.fixed.amount)}</p>
+          <p className="mt-2 text-xs font-light text-fg-muted">
+            {data.fixed.percentage.toFixed(1)}% of spending · {data.fixed.count} transactions
+          </p>
         </div>
-        <div className="text-center">
-          <div className="text-fg-muted text-xs font-light mb-1">Variable</div>
-          <div className="text-fg font-light">{formatCurrency(data.variable.amount)}</div>
-          <div className="text-fg-muted text-xs font-light mt-1">{data.variable.percentage.toFixed(1)}%</div>
+        <div className="rounded-[var(--radius-card)] border border-border bg-surface-raised p-4 shadow-[var(--shadow-card)]">
+          <p className="text-xs font-medium uppercase tracking-wide text-fg-muted">Variable</p>
+          <p className="mt-1 text-xl font-semibold tabular-nums text-fg">{formatCurrency(data.variable.amount)}</p>
+          <p className="mt-2 text-xs font-light text-fg-muted">
+            {data.variable.percentage.toFixed(1)}% of spending · {data.variable.count} transactions
+          </p>
         </div>
+      </div>
+
+      <div className="rounded-[var(--radius-card)] border border-border bg-surface-raised p-3 shadow-[var(--shadow-card)] sm:p-4">
+        <p className="mb-2 text-xs font-medium text-fg-muted">Amount scale (dots)</p>
+        <ResponsiveContainer width="100%" height={140}>
+          <ScatterChart data={chartData} margin={{ top: 4, right: 12, left: 4, bottom: 4 }}>
+            <CartesianGrid
+              stroke={pal.grid}
+              strokeDasharray="3 3"
+              strokeOpacity={visualTheme === 'nothing' ? 0.35 : 0.45}
+            />
+            <XAxis
+              type="number"
+              dataKey="amount"
+              stroke={pal.axis}
+              style={{ fontSize: '11px', fontWeight: 400 }}
+              tickFormatter={(v) => formatCurrency(Number(v))}
+            />
+            <YAxis type="category" dataKey="label" stroke={pal.axis} style={{ fontSize: '11px' }} width={68} />
+            <Tooltip
+              cursor={{ strokeDasharray: '3 3', stroke: pal.grid }}
+              contentStyle={tooltipStyle}
+              formatter={(value: number, _n, item: { payload?: { count?: number } }) => [
+                `${formatCurrency(value)} · ${item.payload?.count ?? 0} tx`,
+                'Amount',
+              ]}
+              labelStyle={{ fontSize: '11px', fontWeight: 600, color: pal.label }}
+            />
+            <Scatter data={chartData} dataKey="amount" shape="circle">
+              {chartData.map((row, i) => (
+                <Cell key={`cell-${row.label}-${i}`} fill={row.fill} />
+              ))}
+            </Scatter>
+          </ScatterChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
