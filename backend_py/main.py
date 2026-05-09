@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 from auth.firebase_auth import firebase_auth_service, get_current_user_from_token
 from services.expense_service import ExpenseService
 from services.fixed_expense_service import FixedExpenseService
-from services.sheets_service import SheetsService
 from services.llm_service import LLMService
 from services.category_service import category_service
 from models.expense import Expense, ExpenseCreate, ExpenseUpdate, FixedExpense, FixedExpenseCreate, FixedExpenseUpdate
@@ -75,7 +74,6 @@ security = HTTPBearer()
 # Initialize services
 expense_service = ExpenseService()
 fixed_expense_service = FixedExpenseService()
-sheets_service = SheetsService()
 llm_service = LLMService()
 
 # Include routers
@@ -370,11 +368,7 @@ async def create_expense(
         
         # Create expense with user ID
         expense = await expense_service.create_expense(expense_data, current_user.uid)
-        
-        # Add to Google Sheets (optional)
-        if sheets_service.enabled:
-            await sheets_service.add_expense(expense, current_user.uid)
-        
+
         return expense
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -453,11 +447,7 @@ async def update_expense(
         )
         if not expense:
             raise HTTPException(status_code=404, detail="Expense not found")
-        
-        # Update in Google Sheets (optional)
-        if sheets_service.enabled:
-            await sheets_service.update_expense(expense, current_user.uid)
-        
+
         return expense
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -472,11 +462,7 @@ async def delete_expense(
         success = await expense_service.delete_expense(expense_id, current_user.uid)
         if not success:
             raise HTTPException(status_code=404, detail="Expense not found")
-        
-        # Remove from Google Sheets (optional)
-        if sheets_service.enabled:
-            await sheets_service.delete_expense(expense_id, current_user.uid)
-        
+
         return {"message": "Expense deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
