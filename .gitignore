@@ -4,3 +4,22 @@ __pycache__/
 .env
 credentials/
 
+backend_py/secrets/
+backend_py/runtime.txt
+notes.txt
+transactions.xlsx
+
+.DS_Store
+.dockerignore
+backend_py/.DS_Store
+
+backend_py/db/schemas/add_fixed_expense_columns.sql
+
+backend_py/db/schemas/fixed_expenses.sql
+backend_py/db/schemas/migrate_fixed_expenses_to_table.sql
+backend_py/db/schemas/truelayer_tokens.sql
+backend_py/nixpacks.toml
+backend_py/runtime.txt
+
+backend_py/test_whatsapp.py
+backend_py/utils/__init__.py
