@@ -49,6 +49,9 @@
           } else {
             document.documentElement.classList.remove('dark');
           }
+          if (localStorage.getItem('app-visual-theme') === 'nothing') {
+            document.documentElement.setAttribute('data-visual', 'nothing');
+          }
         } catch (e) {
           // Fallback to dark if there's any error
           document.documentElement.classList.add('dark');

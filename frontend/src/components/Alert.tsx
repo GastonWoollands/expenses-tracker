@@ -12,20 +12,19 @@ interface AlertProps {
 }
 
 const styles: Record<AlertVariant, string> = {
-  info: 'bg-blue-50 text-blue-700',
-  success: 'bg-green-50 text-green-700',
-  warning: 'bg-yellow-50 text-yellow-700',
-  error: 'bg-red-50 text-red-700',
+  info:
+    'bg-accent-soft text-accent border border-accent-soft-border dark:border-accent/40 dark:bg-accent/10 dark:text-accent-hover',
+  success: 'bg-green-50 text-green-800 border border-green-100 dark:bg-green-900/20 dark:text-green-200 dark:border-green-800',
+  warning: 'bg-yellow-50 text-yellow-800 border border-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-200 dark:border-yellow-800',
+  error: 'bg-red-50 text-red-800 border border-red-100 dark:bg-red-900/20 dark:text-red-200 dark:border-red-800',
 };
 
 const Alert: React.FC<AlertProps> = ({ variant = 'info', children }) => {
   return (
-    <div className={`rounded-md p-4 ${styles[variant]}`}>
+    <div className={`rounded-[var(--radius-control)] p-4 ${styles[variant]}`}>
       <div className="text-sm">{children}</div>
     </div>
   );
 };
 
 export default Alert;
-
-

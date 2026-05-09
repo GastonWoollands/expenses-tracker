@@ -1,12 +1,11 @@
 /**
- * BudgetCategorySetup: Modal for setting up budget categories
+ * BudgetCategorySetup: modal for choosing budget categories
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Check, Settings, Search } from 'lucide-react';
 import Button from '../Button';
 import Input from '../Input';
-import Card from '../Card';
 import { ALL_CATEGORIES, CORE_CATEGORIES } from '../../config/categories';
 import { budgetApiService } from '../../services/budgetApi';
 
@@ -29,282 +28,270 @@ const BudgetCategorySetup: React.FC<BudgetCategorySetupProps> = ({
   isOpen,
   onClose,
   onSave,
-  existingBudgets = []
+  existingBudgets = [],
 }) => {
   const [categories, setCategories] = useState<CategorySetup[]>([]);
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Initialize categories from ALL_CATEGORIES with core categories selected by default
   useEffect(() => {
     if (isOpen) {
-      const coreCategoryKeys = CORE_CATEGORIES.map(cat => cat.key);
-      const initialCategories: CategorySetup[] = ALL_CATEGORIES.map(cat => {
-        const existingBudget = existingBudgets.find(b => b.category_key === cat.key);
+      const coreCategoryKeys = CORE_CATEGORIES.map((cat) => cat.key);
+      const initialCategories: CategorySetup[] = ALL_CATEGORIES.map((cat) => {
+        const existingBudget = existingBudgets.find((b) => b.category_key === cat.key);
         const isCoreCategory = coreCategoryKeys.includes(cat.key);
         return {
           key: cat.key,
           name: cat.label,
           description: cat.description,
           budget: existingBudget?.amount || 0,
-          enabled: existingBudget ? true : isCoreCategory
+          enabled: existingBudget ? true : isCoreCategory,
         };
       });
       setCategories(initialCategories);
     }
   }, [isOpen, existingBudgets]);
 
-  // Filter categories based on search term
   const filteredCategories = useMemo(() => {
     if (!searchTerm.trim()) {
       return categories;
     }
-    
+
     const searchLower = searchTerm.toLowerCase();
-    return categories.filter(category => 
-      category.name.toLowerCase().includes(searchLower) ||
-      category.description.toLowerCase().includes(searchLower) ||
-      category.key.toLowerCase().includes(searchLower)
+    return categories.filter(
+      (category) =>
+        category.name.toLowerCase().includes(searchLower) ||
+        category.description.toLowerCase().includes(searchLower) ||
+        category.key.toLowerCase().includes(searchLower),
     );
   }, [categories, searchTerm]);
 
   const handleCategoryToggle = (key: string) => {
-    setCategories(prev => prev.map(cat => 
-      cat.key === key 
-        ? { ...cat, enabled: !cat.enabled, budget: cat.enabled ? 0 : cat.budget }
-        : cat
-    ));
+    setCategories((prev) =>
+      prev.map((cat) =>
+        cat.key === key ? { ...cat, enabled: !cat.enabled, budget: cat.enabled ? 0 : cat.budget } : cat,
+      ),
+    );
   };
 
   const handleBudgetChange = (key: string, budget: number) => {
-    setCategories(prev => prev.map(cat => 
-      cat.key === key 
-        ? { ...cat, budget: Math.max(0, budget) }
-        : cat
-    ));
+    setCategories((prev) =>
+      prev.map((cat) => (cat.key === key ? { ...cat, budget: Math.max(0, budget) } : cat)),
+    );
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const enabledCategories = categories.filter(cat => cat.enabled);
-      
-      // Save each enabled category budget
+      const enabledCategories = categories.filter((cat) => cat.enabled);
+
       for (const category of enabledCategories) {
         if (category.budget > 0) {
           await budgetApiService.updateBudgetByCategory(category.key, category.budget);
         }
       }
-      
+
       onSave(enabledCategories);
       onClose();
     } catch (error) {
       console.error('Error saving budget categories:', error);
-      // You might want to show an error message here
     } finally {
       setSaving(false);
     }
   };
 
   const handleClose = () => {
-    setSearchTerm(''); // Clear search when closing
+    setSearchTerm('');
     onClose();
   };
 
   const handleSelectAll = () => {
-    // If searching, only toggle filtered categories
     const categoriesToToggle = searchTerm ? filteredCategories : categories;
-    const allEnabled = categoriesToToggle.every(cat => cat.enabled);
-    
-    setCategories(prev => prev.map(cat => {
-      const shouldToggle = categoriesToToggle.some(filteredCat => filteredCat.key === cat.key);
-      if (shouldToggle) {
-        return { 
-          ...cat, 
-          enabled: !allEnabled,
-          budget: !allEnabled ? cat.budget : 0
-        };
-      }
-      return cat;
-    }));
+    const allEnabled = categoriesToToggle.every((cat) => cat.enabled);
+
+    setCategories((prev) =>
+      prev.map((cat) => {
+        const shouldToggle = categoriesToToggle.some((filteredCat) => filteredCat.key === cat.key);
+        if (shouldToggle) {
+          return {
+            ...cat,
+            enabled: !allEnabled,
+            budget: !allEnabled ? cat.budget : 0,
+          };
+        }
+        return cat;
+      }),
+    );
   };
 
   if (!isOpen) return null;
 
+  const toggleSet = searchTerm ? filteredCategories : categories;
+  const allSelectedInToggle = toggleSet.length > 0 && toggleSet.every((cat) => cat.enabled);
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <Card className="w-full max-w-2xl max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-              <Settings className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+      role="presentation"
+      onClick={handleClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="budget-setup-title"
+        className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-[var(--radius-card)] border border-border bg-surface-raised shadow-[var(--shadow-card)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-3 border-b border-border p-5 sm:p-6">
+          <div className="flex min-w-0 items-start gap-3">
+            <div className="shrink-0 rounded-[var(--radius-control)] border border-accent-soft-border bg-accent-soft p-2 dark:bg-accent/10">
+              <Settings className="h-5 w-5 text-accent" aria-hidden />
             </div>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Set Up Budget Categories
+            <div className="min-w-0">
+              <h2 id="budget-setup-title" className="text-lg font-semibold text-fg sm:text-xl">
+                Set up budget categories
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Choose which categories to include in your budget
-              </p>
+              <p className="mt-0.5 text-sm font-light text-fg-muted">Choose which categories to include in your budget.</p>
             </div>
           </div>
           <button
+            type="button"
             onClick={handleClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            className="shrink-0 rounded-[var(--radius-control)] p-2 text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg"
+            aria-label="Close"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="h-5 w-5" aria-hidden />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[60vh]">
-          {/* Search Box */}
+        <div className="max-h-[60vh] flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6">
           <div className="mb-6">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-muted" aria-hidden />
               <Input
                 type="text"
-                placeholder="Search categories..."
+                placeholder="Search categories…"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full"
+                className="w-full pl-10 pr-4 py-2"
               />
             </div>
             {searchTerm && (
-              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              <p className="mt-2 text-sm font-light text-fg-muted">
                 Found {filteredCategories.length} of {categories.length} categories
               </p>
             )}
           </div>
 
-          {/* Select All Toggle */}
-          <div className="flex items-center justify-between mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <div>
-              <h3 className="font-medium text-gray-900 dark:text-white">
-                {searchTerm ? 'Select All Filtered' : 'Select All Categories'}
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {searchTerm 
-                  ? `Enable all ${filteredCategories.length} filtered categories`
-                  : 'Enable all categories for budget tracking'
-                }
+          <div className="mb-6 flex flex-col gap-3 rounded-[var(--radius-card)] border border-border bg-surface-muted/50 p-4 sm:flex-row sm:items-center sm:justify-between dark:bg-surface-muted/30">
+            <div className="min-w-0">
+              <h3 className="font-medium text-fg">{searchTerm ? 'Select all filtered' : 'Select all categories'}</h3>
+              <p className="mt-0.5 text-sm font-light text-fg-muted">
+                {searchTerm
+                  ? `Enable all ${filteredCategories.length} matching categories.`
+                  : 'Enable every category for budget tracking.'}
               </p>
             </div>
             <button
+              type="button"
               onClick={handleSelectAll}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                (searchTerm ? filteredCategories : categories).every(cat => cat.enabled)
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              className={`shrink-0 rounded-[var(--radius-control)] px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-raised ${
+                allSelectedInToggle
+                  ? 'bg-accent text-on-accent hover:opacity-95'
+                  : 'border border-border bg-surface-raised text-fg shadow-[var(--shadow-card)] hover:bg-surface-hover'
               }`}
             >
-              {(searchTerm ? filteredCategories : categories).every(cat => cat.enabled) ? 'Deselect All' : 'Select All'}
+              {allSelectedInToggle ? 'Deselect all' : 'Select all'}
             </button>
           </div>
 
-          {/* Categories List */}
           <div className="space-y-3">
             {filteredCategories.length === 0 && searchTerm ? (
-              <div className="text-center py-8">
-                <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  No categories found
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Try adjusting your search terms
-                </p>
+              <div className="py-8 text-center">
+                <Search className="mx-auto mb-4 h-12 w-12 text-fg-muted opacity-50" aria-hidden />
+                <h3 className="mb-2 text-lg font-medium text-fg">No categories found</h3>
+                <p className="text-sm font-light text-fg-muted">Try a different search.</p>
               </div>
             ) : (
               filteredCategories.map((category) => (
-              <div
-                key={category.key}
-                className={`p-4 rounded-lg border transition-all ${
-                  category.enabled
-                    ? 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900'
-                }`}
-              >
-                <div className="flex items-start space-x-4">
-                  {/* Toggle */}
-                  <button
-                    onClick={() => handleCategoryToggle(category.key)}
-                    className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                      category.enabled
-                        ? 'border-blue-600 bg-blue-600'
-                        : 'border-gray-300 dark:border-gray-600'
-                    }`}
-                  >
-                    {category.enabled && <Check className="w-3 h-3 text-white" />}
-                  </button>
+                <div
+                  key={category.key}
+                  className={`rounded-[var(--radius-card)] border p-4 transition-colors ${
+                    category.enabled
+                      ? 'border-accent-soft-border bg-accent-soft dark:bg-accent/10'
+                      : 'border-border bg-surface-raised'
+                  }`}
+                >
+                  <div className="flex items-start gap-4">
+                    <button
+                      type="button"
+                      onClick={() => handleCategoryToggle(category.key)}
+                      className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface-raised ${
+                        category.enabled ? 'border-accent bg-accent' : 'border-border-strong bg-input'
+                      }`}
+                      aria-pressed={category.enabled}
+                      aria-label={category.enabled ? `Disable ${category.name}` : `Enable ${category.name}`}
+                    >
+                      {category.enabled && <Check className="h-3 w-3 text-on-accent" aria-hidden />}
+                    </button>
 
-                  {/* Category Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-2">
-                      <h4 className="font-medium text-gray-900 dark:text-white">
-                        {category.name}
-                      </h4>
-                      {category.enabled && (
-                        <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full">
-                          Enabled
-                        </span>
-                      )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h4 className="font-medium text-fg">{category.name}</h4>
+                        {category.enabled && (
+                          <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs font-medium text-fg-muted">
+                            Enabled
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-sm font-light text-fg-muted">{category.description}</p>
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      {category.description}
-                    </p>
+
+                    {category.enabled && (
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="text-sm text-fg-muted">$</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={category.budget}
+                          onChange={(e) => handleBudgetChange(category.key, parseFloat(e.target.value) || 0)}
+                          className="w-24 text-sm"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    )}
                   </div>
-
-                  {/* Budget Input */}
-                  {category.enabled && (
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">$</span>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={category.budget}
-                        onChange={(e) => handleBudgetChange(category.key, parseFloat(e.target.value) || 0)}
-                        className="w-24 text-sm"
-                        placeholder="0.00"
-                      />
-                    </div>
-                  )}
                 </div>
-              </div>
               ))
             )}
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-          <Button
-            onClick={handleClose}
-            variant="secondary"
-            disabled={saving}
-          >
+        <div className="flex flex-col-reverse gap-2 border-t border-border bg-surface-muted/30 p-5 sm:flex-row sm:justify-end sm:gap-3 sm:p-6 dark:bg-surface-muted/20">
+          <Button type="button" onClick={handleClose} variant="secondary" disabled={saving}>
             Cancel
           </Button>
           <Button
-            onClick={handleSave}
-            disabled={saving || !categories.some(cat => cat.enabled)}
-            className="flex items-center space-x-2"
+            type="button"
+            onClick={() => void handleSave()}
+            disabled={saving || !categories.some((cat) => cat.enabled)}
+            className="inline-flex items-center gap-2"
           >
             {saving ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>Saving...</span>
+                <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-on-accent/30 border-t-on-accent" aria-hidden />
+                Saving…
               </>
             ) : (
               <>
-                <Check className="w-4 h-4" />
-                <span>Save Budget Categories</span>
+                <Check className="h-4 w-4 shrink-0" aria-hidden />
+                Save categories
               </>
             )}
           </Button>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };

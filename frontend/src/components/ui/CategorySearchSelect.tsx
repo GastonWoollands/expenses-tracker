@@ -136,16 +136,16 @@ const CategorySearchSelect: React.FC<CategorySearchSelectProps> = ({
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           onKeyDown={handleKeyDown}
-          className={`w-full px-3 py-2 text-left bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-            isOpen ? 'ring-2 ring-blue-500 border-blue-500' : ''
-          } ${required && !value ? 'border-red-300 dark:border-red-600' : ''} ${
+          className={`w-full px-3 py-2 text-left rounded-[var(--radius-control)] sm:text-sm bg-input text-fg border border-border-strong shadow-[var(--shadow-card)] transition-colors duration-150 hover:border-border focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-surface ${
+            isOpen ? 'ring-2 ring-ring ring-offset-1 ring-offset-surface border-border-strong' : ''
+          } ${required && !value ? 'border-red-400 dark:border-red-500/60' : ''} ${
             value ? 'pr-20' : 'pr-10'
           }`}
           aria-haspopup="listbox"
           aria-expanded={isOpen}
           aria-required={required}
         >
-          <span className={selectedCategory ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}>
+          <span className={selectedCategory ? 'text-fg' : 'text-fg-muted'}>
             {isLoading ? 'Loading categories...' : selectedCategory ? selectedCategory.name : placeholder}
           </span>
         </button>
@@ -157,42 +157,43 @@ const CategorySearchSelect: React.FC<CategorySearchSelectProps> = ({
                 e.stopPropagation();
                 handleClear(e);
               }}
-              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              className="rounded-[var(--radius-control)] p-1 text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg"
               aria-label="Clear selection"
             >
-              <X className="w-4 h-4 text-gray-400" />
+              <X className="h-4 w-4" />
             </button>
           )}
-          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''} pointer-events-none`} />
+          <ChevronDown className={`h-4 w-4 shrink-0 text-fg-muted transition-transform ${isOpen ? 'rotate-180' : ''} pointer-events-none`} />
         </div>
       </div>
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-hidden">
+        <div className="absolute z-50 mt-1 max-h-60 w-full overflow-hidden rounded-[var(--radius-card)] border border-border bg-surface-raised shadow-[var(--shadow-card-hover)]">
           {/* Search Input */}
-          <div className="p-2 border-b border-gray-200 dark:border-gray-700">
+          <div className="border-b border-border p-2">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-muted" aria-hidden />
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Search categories..."
+                placeholder="Search categories…"
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
                   setHighlightedIndex(-1);
                 }}
-                className="w-full pl-10 pr-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                onKeyDown={handleKeyDown}
+                className="w-full rounded-[var(--radius-control)] border border-border-strong bg-input py-2 pl-10 pr-3 text-sm text-fg placeholder:text-fg-muted/80 transition-colors duration-150 hover:border-border focus:border-border-strong focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-surface"
               />
             </div>
             {searchTerm && (
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-xs font-light text-fg-muted">
                 {filteredCategories.length} of {userCategories.length} categories
               </p>
             )}
             {isFallback && !searchTerm && (
-              <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+              <p className="mt-1 text-xs font-light text-fg-muted">
                 Using default categories. Set up your budget to see your custom categories.
               </p>
             )}
@@ -201,20 +202,24 @@ const CategorySearchSelect: React.FC<CategorySearchSelectProps> = ({
           {/* Category List */}
           <div className="max-h-48 overflow-y-auto">
             {isLoading ? (
-              <div className="px-3 py-4 text-center text-gray-500 dark:text-gray-400">
-                <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-2"></div>
-                <p className="text-sm">Loading categories...</p>
+              <div className="px-3 py-4 text-center text-fg-muted">
+                <div
+                  className="mx-auto mb-2 h-6 w-6 animate-spin rounded-full border-2 border-border-strong border-t-accent"
+                  role="status"
+                  aria-label="Loading"
+                />
+                <p className="text-sm text-fg">Loading categories…</p>
               </div>
             ) : error ? (
-              <div className="px-3 py-4 text-center text-red-500 dark:text-red-400">
-                <p className="text-sm">Failed to load categories</p>
-                <p className="text-xs">Using default categories</p>
+              <div className="px-3 py-4 text-center">
+                <p className="text-sm text-red-600 dark:text-red-400">Failed to load categories</p>
+                <p className="mt-1 text-xs font-light text-fg-muted">Using default categories</p>
               </div>
             ) : filteredCategories.length === 0 ? (
-              <div className="px-3 py-4 text-center text-gray-500 dark:text-gray-400">
-                <Search className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                <p className="text-sm">No categories found</p>
-                <p className="text-xs">Try adjusting your search</p>
+              <div className="px-3 py-4 text-center text-fg-muted">
+                <Search className="mx-auto mb-2 h-8 w-8 opacity-40" aria-hidden />
+                <p className="text-sm text-fg">No categories found</p>
+                <p className="text-xs font-light">Try adjusting your search</p>
               </div>
             ) : (
               filteredCategories.map((category, index) => (
@@ -222,22 +227,24 @@ const CategorySearchSelect: React.FC<CategorySearchSelectProps> = ({
                   key={category.key}
                   type="button"
                   onClick={() => handleCategorySelect(category.key)}
-                  className={`w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-700 ${
-                    index === highlightedIndex ? 'bg-gray-100 dark:bg-gray-700' : ''
-                  } ${value === category.key ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : ''}`}
+                  className={`w-full px-3 py-2 text-left text-fg transition-colors focus:outline-none focus-visible:bg-surface-hover ${
+                    index === highlightedIndex
+                      ? 'bg-surface-hover'
+                      : value === category.key
+                        ? 'bg-accent-soft text-accent dark:bg-accent/15'
+                        : 'hover:bg-surface-hover'
+                  }`}
                 >
-                  <div className="flex flex-col">
-                    <div className="flex items-center space-x-2">
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="font-medium">{category.name}</span>
                       {category.is_user_selected && (
-                        <span className="px-2 py-0.5 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full">
-                          Your Budget
+                        <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs font-medium text-fg-muted">
+                          Your budget
                         </span>
                       )}
                     </div>
-                    <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      {category.description}
-                    </span>
+                    <span className="truncate text-xs font-light text-fg-muted">{category.description}</span>
                   </div>
                 </button>
               ))

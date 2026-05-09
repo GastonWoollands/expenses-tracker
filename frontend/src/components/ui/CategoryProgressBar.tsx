@@ -53,16 +53,14 @@ const CategoryProgressBar: React.FC<CategoryProgressBarProps> = ({
         
         {/* 100% marker */}
         {percentage > 100 && (
-          <div className="absolute top-0 left-full w-0.5 h-full bg-gray-400 dark:bg-gray-600" />
+          <div className="absolute top-0 left-full h-full w-0.5 bg-border-strong" />
         )}
       </div>
       
       {/* Percentage text */}
-      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 text-right">
+      <div className="mt-1 text-right text-xs text-fg-muted">
         {percentage > 100 && (
-        <span className="text-red-600 dark:text-red-300 font-medium">
-            {percentage.toFixed(0)}% used
-          </span>
+          <span className="font-medium text-red-600 dark:text-red-300">{percentage.toFixed(0)}% used</span>
         )}
       </div>
     </div>

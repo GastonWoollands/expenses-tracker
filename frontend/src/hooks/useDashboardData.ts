@@ -31,18 +31,15 @@ export function useExpenses(startDate?: Date, endDate?: Date) {
     try {
       setLoading(true);
       setError(null);
-      console.log('Fetching expenses...', { startDate, endDate });
-      
+
       const startDateStr = startDate ? formatDateForAPI(startDate) : undefined;
       const endDateStr = endDate ? formatDateForAPI(endDate) : undefined;
       
       const data = await apiService.getExpenses(1000, 0, startDateStr, endDateStr);
-      console.log('Expenses fetched:', data);
-      
+
       // Ensure data is an array
       const safeData = Array.isArray(data) ? data : [];
       setExpenses(safeData);
-      console.log('Expenses state updated with', safeData.length, 'items');
     } catch (err) {
       console.error('Error fetching expenses:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch expenses';
@@ -124,8 +121,6 @@ export function useExpenseSummary() {
     }, {} as Record<string, { amount: number; count: number }>)
   }), [safeExpenses]);
 
-  console.log('Expense summary calculated:', summary);
-
   return { summary, loading, error };
 }
 
@@ -134,9 +129,7 @@ export function useMonthlyTotals() {
   
   // Safety check: ensure expenses is an array
   const safeExpenses = Array.isArray(expenses) ? expenses : [];
-  
-  console.log('Processing expenses for monthly totals:', safeExpenses.length, 'expenses');
-  
+
   const monthlyTotals: MonthlyTotal[] = useMemo(() => {
     // Group expenses by month and year, summing amounts
     const monthlyTotalsMap = new Map<string, { year: number; month: number; monthName: string; total: number }>();
@@ -198,8 +191,6 @@ export function useMonthlyTotals() {
         };
       });
   }, [safeExpenses]);
-
-  console.log('Monthly totals calculated:', monthlyTotals);
 
   return { monthlyTotals, loading, error };
 }

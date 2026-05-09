@@ -30,21 +30,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.3);
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(156, 163, 175, 0.5);
-}
-
-/* Dark mode scrollbar */
-html.dark ::-webkit-scrollbar-thumb {
-  background: rgba(75, 85, 99, 0.3);
-}
-
-html.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(75, 85, 99, 0.5);
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* Focus styles for accessibility */
@@ -52,7 +43,7 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--ring-focus);
   outline-offset: 2px;
 }
 
@@ -126,11 +117,12 @@ textarea:focus-visible {
 
 .card-hover:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-card-hover);
 }
 
-html.dark .card-hover:hover {
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+html[data-visual="nothing"] .card-hover:hover {
+  transform: none;
+  box-shadow: none;
 }
 
 /* Table row hover effects */
@@ -139,11 +131,7 @@ html.dark .card-hover:hover {
 }
 
 .table-row-hover:hover {
-  background-color: rgba(249, 250, 251, 0.8);
-}
-
-html.dark .table-row-hover:hover {
-  background-color: rgba(31, 41, 55, 0.8);
+  background-color: var(--bg-row-hover);
 }
 
 /* Progress bar animations */

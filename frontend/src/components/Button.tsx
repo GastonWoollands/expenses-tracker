@@ -15,17 +15,17 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow transition-all duration-200 dark:bg-blue-600 dark:hover:bg-blue-700',
+    'text-on-accent bg-accent hover:bg-accent-hover active:opacity-90 focus:ring-ring focus:ring-offset-2 focus:ring-offset-surface disabled:opacity-50 disabled:cursor-not-allowed shadow-[var(--shadow-card)] hover:opacity-[0.98] transition-opacity duration-150',
   secondary:
-    'text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow transition-all duration-200',
+    'text-fg bg-surface-raised border border-border hover:bg-surface-hover focus:ring-ring focus:ring-offset-2 focus:ring-offset-surface disabled:opacity-50 disabled:cursor-not-allowed shadow-[var(--shadow-card)] transition-colors duration-150',
   ghost:
-    'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200',
+    'text-fg hover:bg-surface-hover focus:ring-ring focus:ring-offset-2 focus:ring-offset-surface disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'px-3 py-1.5 text-sm rounded-md',
-  md: 'px-4 py-2 text-sm rounded-md',
-  lg: 'px-5 py-3 text-base rounded-lg',
+  sm: 'px-3 py-1.5 text-sm rounded-[var(--radius-control)]',
+  md: 'px-4 py-2 text-sm rounded-[var(--radius-control)]',
+  lg: 'px-5 py-3 text-base rounded-[var(--radius-control)]',
 };
 
 const Button: React.FC<ButtonProps> = ({
@@ -48,5 +48,3 @@ const Button: React.FC<ButtonProps> = ({
 };
 
 export default Button;
-
-
