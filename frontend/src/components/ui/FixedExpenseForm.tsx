@@ -30,6 +30,9 @@ const initialState: FormState = {
   description: '',
 };
 
+const iconSlot =
+  'absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-fg-muted z-10';
+
 const FixedExpenseForm: React.FC<FixedExpenseFormProps> = ({
   fixedExpense,
   onSubmit,
@@ -111,25 +114,26 @@ const FixedExpenseForm: React.FC<FixedExpenseFormProps> = ({
       if (!fixedExpense) {
         setForm(initialState);
       }
-    } catch (err: any) {
-      setError(err?.message || 'Failed to save fixed expense');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to save fixed expense';
+      setError(message);
     }
   };
 
   return (
     <Card>
       <form className="space-y-5" onSubmit={handleSubmit}>
-        <div className="flex items-center gap-2 mb-4">
-          <Repeat className="h-5 w-5 text-blue-500 dark:text-blue-400" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {fixedExpense ? 'Edit Fixed Expense' : 'Add Fixed Expense'}
+        <div className="mb-4 flex items-center gap-2">
+          <Repeat className="h-5 w-5 shrink-0 text-fg-muted" aria-hidden />
+          <h3 className="text-lg font-semibold text-fg">
+            {fixedExpense ? 'Edit fixed expense' : 'Add fixed expense'}
           </h3>
         </div>
 
         <FormField label="Category" htmlFor="category">
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-purple-500 dark:text-purple-400 z-10">
-              <Tag className="h-5 w-5" />
+            <div className={iconSlot}>
+              <Tag className="h-5 w-5" aria-hidden />
             </div>
             <CategorySearchSelect
               value={form.category}
@@ -143,8 +147,8 @@ const FixedExpenseForm: React.FC<FixedExpenseFormProps> = ({
 
         <FormField label="Amount" htmlFor="amount">
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-green-500 dark:text-green-400 z-10">
-              <Coins className="h-5 w-5" />
+            <div className={iconSlot}>
+              <Coins className="h-5 w-5" aria-hidden />
             </div>
             <Input
               id="amount"
@@ -161,10 +165,10 @@ const FixedExpenseForm: React.FC<FixedExpenseFormProps> = ({
           </div>
         </FormField>
 
-        <FormField label="Day of Month" htmlFor="day_of_month">
+        <FormField label="Day of month" htmlFor="day_of_month">
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-blue-500 dark:text-blue-400 z-10">
-              <Calendar className="h-5 w-5" />
+            <div className={iconSlot}>
+              <Calendar className="h-5 w-5" aria-hidden />
             </div>
             <Input
               id="day_of_month"
@@ -179,15 +183,15 @@ const FixedExpenseForm: React.FC<FixedExpenseFormProps> = ({
               className="pl-10"
             />
           </div>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            The day of the month when this expense will be applied (1-31)
+          <p className="mt-1 text-xs font-light text-fg-muted">
+            Day each month this amount is recorded (1–31).
           </p>
         </FormField>
 
-        <FormField label="Description / Notes" htmlFor="description">
+        <FormField label="Description" htmlFor="description">
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-orange-500 dark:text-orange-400 z-10">
-              <FileText className="h-5 w-5" />
+            <div className={iconSlot}>
+              <FileText className="h-5 w-5" aria-hidden />
             </div>
             <Input
               id="description"
@@ -215,7 +219,7 @@ const FixedExpenseForm: React.FC<FixedExpenseFormProps> = ({
             Cancel
           </Button>
           <Button type="submit" isLoading={isLoading} className="flex-1">
-            {fixedExpense ? 'Update' : 'Create'} Fixed Expense
+            {fixedExpense ? 'Update fixed expense' : 'Save fixed expense'}
           </Button>
         </div>
       </form>

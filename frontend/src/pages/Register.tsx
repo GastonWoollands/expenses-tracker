@@ -74,14 +74,14 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 py-16">
+    <div className="min-h-screen flex items-center justify-center bg-surface text-fg py-16">
       <Container width="sm">
         <Card>
           <div className="space-y-3 text-center">
             <Heading level={2}>Create your account</Heading>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
+            <p className="text-sm text-fg-muted">
               Or{' '}
-              <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
+              <Link to="/login" className="font-medium text-accent hover:text-accent-hover underline-offset-2 hover:underline">
                 sign in to your existing account
               </Link>
             </p>
@@ -98,7 +98,7 @@ const Register: React.FC = () => {
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                leftIcon={<Mail className="h-5 w-5 text-gray-400" />}
+                leftIcon={<Mail className="h-5 w-5" />}
               />
             </FormField>
 
@@ -111,7 +111,7 @@ const Register: React.FC = () => {
                 placeholder="First name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                leftIcon={<User className="h-5 w-5 text-gray-400" />}
+                leftIcon={<User className="h-5 w-5" />}
               />
             </FormField>
 
@@ -124,7 +124,7 @@ const Register: React.FC = () => {
                 placeholder="Last name"
                 value={surname}
                 onChange={(e) => setSurname(e.target.value)}
-                leftIcon={<User className="h-5 w-5 text-gray-400" />}
+                leftIcon={<User className="h-5 w-5" />}
               />
             </FormField>
 
@@ -137,7 +137,7 @@ const Register: React.FC = () => {
                 placeholder="Phone number"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
-                leftIcon={<Phone className="h-5 w-5 text-gray-400" />}
+                leftIcon={<Phone className="h-5 w-5" />}
               />
             </FormField>
 
@@ -151,11 +151,11 @@ const Register: React.FC = () => {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                leftIcon={<Lock className="h-5 w-5 text-gray-400" />}
+                leftIcon={<Lock className="h-5 w-5" />}
                 rightAdornment={
                   <button
                     type="button"
-                    className="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500"
+                    className="text-fg-muted hover:text-fg focus:outline-none"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -174,11 +174,11 @@ const Register: React.FC = () => {
                 placeholder="Confirm password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                leftIcon={<Lock className="h-5 w-5 text-gray-400" />}
+                leftIcon={<Lock className="h-5 w-5" />}
                 rightAdornment={
                   <button
                     type="button"
-                    className="text-gray-400 hover:text-gray-500 focus:outline-none focus:text-gray-500"
+                    className="text-fg-muted hover:text-fg focus:outline-none"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
                     {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}

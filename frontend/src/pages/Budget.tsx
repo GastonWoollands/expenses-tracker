@@ -1,27 +1,27 @@
 /**
- * Budget Page: Clean, minimalist budget tracking interface
- * Displays income, expenses, remaining balance, and category budgets
+ * Budget: income, category limits, and monthly overview (layout aligned with Dashboard)
  */
 
 import React, { useState } from 'react';
-import { ResponsiveContainer, Heading, Card } from '../components';
+import { Link } from 'react-router-dom';
+import { ResponsiveContainer, Heading, Card, Button } from '../components';
 import BudgetSummaryCard from '../components/ui/BudgetSummaryCard';
 import BudgetCategoryTable from '../components/ui/BudgetCategoryTable';
 import MonthlyBudgetOverview from '../components/ui/MonthlyBudgetOverview';
 import BudgetCategorySetup from '../components/ui/BudgetCategorySetup';
 import { useBudgetData } from '../hooks/useBudgetData';
 import { getCurrentMonthName, getCurrentYear } from '../utils/formatters';
-import { Settings } from 'lucide-react';
+import { Settings, LayoutDashboard, Wallet, Loader2, CheckCircle, CircleAlert } from 'lucide-react';
 
 const Budget: React.FC = () => {
-  const { 
-    budgetData, 
-    loading, 
-    error, 
+  const {
+    budgetData,
+    loading,
+    error,
     saveStatus,
-    updateIncome, 
+    updateIncome,
     updateCategoryBudget,
-    refreshData
+    refreshData,
   } = useBudgetData();
 
   const [editingIncome, setEditingIncome] = useState(false);
@@ -31,40 +31,36 @@ const Budget: React.FC = () => {
   if (loading) {
     return (
       <ResponsiveContainer maxWidth="xl">
-        <div className="min-h-screen py-6 sm:py-8">
-          <div className="space-y-6 sm:space-y-8">
-            <div className="text-center">
-              <Heading level={1} className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Budget
-              </Heading>
-              <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
-                Loading your budget overview...
-              </p>
+        <div className="space-y-10 pb-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <Heading level={2}>Budget</Heading>
+              <p className="mt-2 max-w-xl text-sm font-light text-fg-muted">Loading your budget overview…</p>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <Card className="p-6">
-                  <div className="animate-pulse space-y-4">
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
-                    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
-                  </div>
-                </Card>
-              </div>
-              <div className="space-y-4">
-                <Card className="p-6">
-                  <div className="animate-pulse space-y-3">
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                  </div>
-                </Card>
-                <Card className="p-6">
-                  <div className="animate-pulse space-y-3">
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                  </div>
-                </Card>
-              </div>
+          </div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <Card>
+                <div className="animate-pulse space-y-4">
+                  <div className="h-4 w-1/4 rounded bg-surface-muted" />
+                  <div className="h-8 w-1/2 rounded bg-surface-muted" />
+                  <div className="h-4 w-1/3 rounded bg-surface-muted" />
+                </div>
+              </Card>
+            </div>
+            <div className="space-y-4">
+              <Card>
+                <div className="animate-pulse space-y-3">
+                  <div className="h-4 w-1/2 rounded bg-surface-muted" />
+                  <div className="h-6 w-3/4 rounded bg-surface-muted" />
+                </div>
+              </Card>
+              <Card>
+                <div className="animate-pulse space-y-3">
+                  <div className="h-4 w-1/2 rounded bg-surface-muted" />
+                  <div className="h-6 w-3/4 rounded bg-surface-muted" />
+                </div>
+              </Card>
             </div>
           </div>
         </div>
@@ -75,30 +71,28 @@ const Budget: React.FC = () => {
   if (error) {
     return (
       <ResponsiveContainer maxWidth="xl">
-        <div className="min-h-screen py-6 sm:py-8">
-          <div className="space-y-6 sm:space-y-8">
-            <div className="text-center">
-              <Heading level={1} className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Budget
-              </Heading>
-              <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
-                Unable to load budget data
-              </p>
+        <div className="space-y-10 pb-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <Heading level={2}>Budget</Heading>
+              <p className="mt-2 max-w-xl text-sm font-light text-fg-muted">Unable to load budget data.</p>
             </div>
-            <Card className="p-6">
-              <div className="text-center">
-                <p className="text-red-600 dark:text-red-400 mb-4">
-                  Error loading budget data: {error}
-                </p>
-                <button 
-                  onClick={() => window.location.reload()}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Retry
-                </button>
-              </div>
-            </Card>
+            <Link
+              to="/dashboard"
+              className="inline-flex shrink-0 items-center gap-2 self-start rounded-[var(--radius-control)] border border-border bg-surface-raised px-4 py-2.5 text-sm font-medium text-fg shadow-[var(--shadow-card)] transition-colors hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+            >
+              <LayoutDashboard className="h-4 w-4 shrink-0 text-fg-muted" aria-hidden />
+              Dashboard
+            </Link>
           </div>
+          <Card>
+            <div className="text-center">
+              <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>
+              <Button type="button" onClick={() => window.location.reload()}>
+                Retry
+              </Button>
+            </div>
+          </Card>
         </div>
       </ResponsiveContainer>
     );
@@ -106,137 +100,119 @@ const Budget: React.FC = () => {
 
   return (
     <ResponsiveContainer maxWidth="xl">
-      <div className="min-h-screen py-6 sm:py-8">
-        <div className="space-y-6 sm:space-y-8">
-          {/* Header */}
-          <div className="text-center">
-            <Heading level={1} className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Budget
-            </Heading>
-            <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
-              Track your income, expenses, and budget goals for {getCurrentMonthName()} {getCurrentYear()}
+      <div className="space-y-10 pb-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1">
+            <Heading level={2}>Budget</Heading>
+            <p className="mt-2 max-w-xl text-sm font-light text-fg-muted">
+              Track income, spending limits, and goals for {getCurrentMonthName()} {getCurrentYear()}.
             </p>
-            
-            {/* Save Status Indicator */}
-            {saveStatus.saving && (
-              <div className="mt-4 inline-flex items-center px-3 py-2 rounded-full text-sm bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                Saving...
-              </div>
-            )}
-            
-            {saveStatus.saved && (
-              <div className="mt-4 inline-flex items-center px-3 py-2 rounded-full text-sm bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-                Saved successfully
-              </div>
-            )}
-            
-            {saveStatus.error && (
-              <div className="mt-4 inline-flex items-center px-3 py-2 rounded-full text-sm bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
-                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                {saveStatus.error}
-              </div>
-            )}
-          </div>
-
-          {/* Top-Level Summary */}
-          <BudgetSummaryCard
-            income={budgetData.income}
-            totalExpenses={budgetData.totalExpenses}
-            remainingBalance={budgetData.remainingBalance}
-            editingIncome={editingIncome}
-            onEditIncome={() => setEditingIncome(true)}
-            onSaveIncome={(amount: number) => {
-              updateIncome(amount);
-              setEditingIncome(false);
-            }}
-            onCancelEdit={() => setEditingIncome(false)}
-          />
-
-          {/* Budget by Category */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Heading level={2} className="text-xl font-semibold text-gray-900 dark:text-white">
-                Budget by Category
-              </Heading>
-              <div className="flex items-center space-x-4">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {budgetData.categories.length} categories
-                </p>
-                <button
-                  onClick={() => setShowCategorySetup(true)}
-                  className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                >
-                  <Settings className="w-4 h-4" />
-                  <span>Set Up Categories</span>
-                </button>
-              </div>
+            <div className="mt-4 flex min-h-[2rem] flex-wrap items-center gap-2">
+              {saveStatus.saving && (
+                <span className="inline-flex items-center gap-2 rounded-full border border-border bg-surface-muted px-3 py-1.5 text-sm text-fg">
+                  <Loader2 className="h-4 w-4 shrink-0 animate-spin text-accent" aria-hidden />
+                  Saving…
+                </span>
+              )}
+              {saveStatus.saved && !saveStatus.saving && (
+                <span className="inline-flex items-center gap-2 rounded-full border border-border bg-surface-muted px-3 py-1.5 text-sm text-fg">
+                  <CheckCircle className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
+                  Saved
+                </span>
+              )}
+              {saveStatus.error && (
+                <span className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200">
+                  <CircleAlert className="h-4 w-4 shrink-0" aria-hidden />
+                  {saveStatus.error}
+                </span>
+              )}
             </div>
-            
-            <BudgetCategoryTable
-              categories={budgetData.categories}
-              editingCategory={editingCategory}
-              onEditCategory={(categoryId: string) => setEditingCategory(categoryId)}
-              onSaveCategory={(categoryId: string, budget: number) => {
-                updateCategoryBudget(categoryId, budget);
-                setEditingCategory(null);
-              }}
-              onCancelEdit={() => setEditingCategory(null)}
-            />
+          </div>
+          <Link
+            to="/dashboard"
+            className="inline-flex shrink-0 items-center gap-2 self-start rounded-[var(--radius-control)] border border-border bg-surface-raised px-4 py-2.5 text-sm font-medium text-fg shadow-[var(--shadow-card)] transition-colors hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+          >
+            <LayoutDashboard className="h-4 w-4 shrink-0 text-fg-muted" aria-hidden />
+            Dashboard
+          </Link>
+        </div>
+
+        <BudgetSummaryCard
+          income={budgetData.income}
+          totalExpenses={budgetData.totalExpenses}
+          remainingBalance={budgetData.remainingBalance}
+          editingIncome={editingIncome}
+          onEditIncome={() => setEditingIncome(true)}
+          onSaveIncome={(amount: number) => {
+            updateIncome(amount);
+            setEditingIncome(false);
+          }}
+          onCancelEdit={() => setEditingIncome(false)}
+        />
+
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <Heading level={2}>Budget by category</Heading>
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-sm font-light text-fg-muted">{budgetData.categories.length} categories</p>
+              <button
+                type="button"
+                onClick={() => setShowCategorySetup(true)}
+                className="inline-flex items-center gap-2 rounded-[var(--radius-control)] border border-border bg-surface-raised px-3 py-2 text-sm font-medium text-fg shadow-[var(--shadow-card)] transition-colors hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+              >
+                <Settings className="h-4 w-4 shrink-0 text-fg-muted" aria-hidden />
+                Set up categories
+              </button>
+            </div>
           </div>
 
-          {/* Monthly Budget Overview */}
-          <MonthlyBudgetOverview
-            totalBudget={budgetData.totalBudget}
-            totalExpenses={budgetData.totalExpenses}
-            difference={budgetData.budgetDifference}
+          <BudgetCategoryTable
+            categories={budgetData.categories}
+            editingCategory={editingCategory}
+            onEditCategory={(categoryId: string) => setEditingCategory(categoryId)}
+            onSaveCategory={(categoryId: string, budget: number) => {
+              updateCategoryBudget(categoryId, budget);
+              setEditingCategory(null);
+            }}
+            onCancelEdit={() => setEditingCategory(null)}
           />
-
-          {/* Empty State */}
-          {budgetData.categories.length === 0 && (
-            <Card className="p-8">
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <Heading level={3} className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  No Budget Categories Defined
-                </Heading>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  Set up budget limits for your expense categories to start tracking your spending goals.
-                </p>
-                <button 
-                  onClick={() => setShowCategorySetup(true)}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                >
-                  Set Up Budget Categories
-                </button>
-              </div>
-            </Card>
-          )}
         </div>
+
+        <MonthlyBudgetOverview
+          totalBudget={budgetData.totalBudget}
+          totalExpenses={budgetData.totalExpenses}
+          difference={budgetData.budgetDifference}
+        />
+
+        {budgetData.categories.length === 0 && (
+          <Card>
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface-muted">
+                <Wallet className="h-8 w-8 text-fg-muted" aria-hidden />
+              </div>
+              <h3 className="mb-2 text-lg font-semibold text-fg">No budget categories yet</h3>
+              <p className="mx-auto mb-6 max-w-md text-sm font-light text-fg-muted">
+                Add limits for your expense categories to see progress against your plan.
+              </p>
+              <Button type="button" onClick={() => setShowCategorySetup(true)}>
+                Set up categories
+              </Button>
+            </div>
+          </Card>
+        )}
       </div>
 
-      {/* Budget Category Setup Modal */}
       <BudgetCategorySetup
         isOpen={showCategorySetup}
         onClose={() => setShowCategorySetup(false)}
         onSave={() => {
-          // Refresh budget data after saving
           refreshData();
         }}
         existingBudgets={budgetData.categories
-          .filter(cat => cat.budget > 0)
-          .map(cat => ({
+          .filter((cat) => cat.budget > 0)
+          .map((cat) => ({
             category_key: cat.id,
-            amount: cat.budget
+            amount: cat.budget,
           }))}
       />
     </ResponsiveContainer>

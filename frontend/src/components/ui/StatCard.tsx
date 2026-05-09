@@ -23,40 +23,34 @@ const StatCard: React.FC<StatCardProps> = ({
   subtitle,
   icon,
   trend,
-  className = ''
+  className = '',
 }) => {
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 ${className}`}>
+    <div
+      className={`bg-surface-raised rounded-[var(--radius-card)] border border-border p-6 shadow-[var(--shadow-card)] ${className}`}
+    >
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-            {title}
-          </p>
+          <p className="text-sm font-medium text-fg-muted mb-1">{title}</p>
           <div className="flex items-baseline">
-            <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-              {value}
-            </p>
+            <p className="text-2xl font-semibold text-fg">{value}</p>
             {trend && (
-              <span className={`ml-2 text-sm font-medium ${
-                trend.isPositive 
-                  ? 'text-green-600 dark:text-green-400' 
-                  : 'text-red-600 dark:text-red-400'
-              }`}>
+              <span
+                className={`ml-2 text-sm font-medium ${
+                  trend.isPositive
+                    ? 'text-green-600 dark:text-green-400'
+                    : 'text-red-600 dark:text-red-400'
+                }`}
+              >
                 {trend.isPositive ? '↗' : '↘'} {Math.abs(trend.value)}%
               </span>
             )}
           </div>
           {subtitle && (
-            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-              {subtitle}
-            </p>
+            <p className="text-xs text-fg-muted mt-1">{subtitle}</p>
           )}
         </div>
-        {icon && (
-          <div className="flex-shrink-0 text-gray-400 dark:text-gray-500">
-            {icon}
-          </div>
-        )}
+        {icon && <div className="flex-shrink-0 text-fg-muted">{icon}</div>}
       </div>
     </div>
   );

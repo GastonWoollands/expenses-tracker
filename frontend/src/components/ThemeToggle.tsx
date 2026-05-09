@@ -1,5 +1,5 @@
 /**
- * Minimal theme toggle button - icon only
+ * Light / dark mode toggle
  */
 
 import React from 'react';
@@ -18,20 +18,15 @@ const ThemeToggle: React.FC = () => {
 
   return (
     <button
+      type="button"
       onClick={handleClick}
-      className="inline-flex items-center justify-center w-9 h-9 rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 active:bg-slate-200 dark:active:bg-slate-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+      className="inline-flex items-center justify-center w-9 h-9 rounded-[var(--radius-control)] text-fg-muted hover:text-fg hover:bg-surface-hover active:opacity-80 transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-surface-raised"
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       title={isDark ? 'Light mode' : 'Dark mode'}
     >
-      {isDark ? (
-        <Sun className="h-5 w-5" />
-      ) : (
-        <Moon className="h-5 w-5" />
-      )}
+      {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
     </button>
   );
 };
 
 export default ThemeToggle;
-
-

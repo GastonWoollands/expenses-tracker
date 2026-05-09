@@ -1,5 +1,5 @@
 /**
- * BudgetCategoryTable: Responsive table showing budget status by category
+ * BudgetCategoryTable: budget status by category
  */
 
 import React from 'react';
@@ -8,7 +8,7 @@ import Input from '../Input';
 import Button from '../Button';
 import CategoryProgressBar from './CategoryProgressBar';
 import { formatCurrency } from '../../utils/formatters';
-import { Edit3, Check, X } from 'lucide-react';
+import { Edit3, Check, X, PieChart } from 'lucide-react';
 
 export interface BudgetCategory {
   id: string;
@@ -32,25 +32,20 @@ const BudgetCategoryTable: React.FC<BudgetCategoryTableProps> = ({
   editingCategory,
   onEditCategory,
   onSaveCategory,
-  onCancelEdit
+  onCancelEdit,
 }) => {
-  // Sort categories by percentage used (descending)
   const sortedCategories = [...categories].sort((a, b) => b.percentageUsed - a.percentageUsed);
 
   if (categories.length === 0) {
     return (
-      <Card className="p-8">
+      <Card>
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
-            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-surface-muted">
+            <PieChart className="h-8 w-8 text-fg-muted" aria-hidden />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            No Budget Categories
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400">
-            Set up budget limits for your expense categories to track spending goals.
+          <h3 className="mb-2 text-lg font-semibold text-fg">No budget categories</h3>
+          <p className="text-sm font-light text-fg-muted">
+            Set limits for your expense categories to track spending goals.
           </p>
         </div>
       </Card>
@@ -59,52 +54,55 @@ const BudgetCategoryTable: React.FC<BudgetCategoryTableProps> = ({
 
   return (
     <Card className="overflow-hidden">
-      {/* Desktop Table */}
       <div className="hidden lg:block">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-800">
+            <thead className="border-b border-border bg-surface-muted/80">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-fg-muted">
                   Category
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-fg-muted">
                   Budget
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-fg-muted">
                   Spent
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  % Used
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-fg-muted">
+                  % used
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-fg-muted">
                   Progress
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-fg-muted">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="divide-y divide-border bg-surface-raised">
               {sortedCategories.map((category) => (
-                <tr key={category.id} data-category={category.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                <tr
+                  key={category.id}
+                  data-category={category.id}
+                  className="transition-colors hover:bg-surface-hover/80"
+                >
+                  <td className="whitespace-nowrap px-6 py-4">
                     <div className="flex items-center">
-                      <div className={`w-3 h-3 rounded-full mr-3 ${
-                        category.isOverBudget
-                          ? 'bg-red-600/80'
-                          : category.percentageUsed > 80
-                            ? 'bg-amber-600/80'
-                            : 'bg-emerald-600/80'
-                      }`} />
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        {category.name}
-                      </div>
+                      <div
+                        className={`mr-3 h-3 w-3 shrink-0 rounded-full ${
+                          category.isOverBudget
+                            ? 'bg-red-600/80'
+                            : category.percentageUsed > 80
+                              ? 'bg-amber-600/80'
+                              : 'bg-emerald-600/80'
+                        }`}
+                      />
+                      <div className="text-sm font-medium text-fg">{category.name}</div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap px-6 py-4">
                     {editingCategory === category.id ? (
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center gap-2">
                         <Input
                           type="number"
                           step="0.01"
@@ -124,69 +122,63 @@ const BudgetCategoryTable: React.FC<BudgetCategoryTableProps> = ({
                           autoFocus
                         />
                         <Button
+                          type="button"
                           onClick={() => {
-                            // Find the input field in the same row
                             const input = document.querySelector(
-                              `tr[data-category="${category.id}"] input[type="number"]`
+                              `tr[data-category="${category.id}"] input[type="number"]`,
                             ) as HTMLInputElement;
                             const amount = parseFloat(input?.value || category.budget.toString());
                             if (!isNaN(amount) && amount >= 0) {
                               onSaveCategory(category.id, amount);
                             }
                           }}
-                          className="p-1 bg-green-600 hover:bg-green-700 text-white"
+                          className="p-1.5"
                           title="Save budget"
                         >
-                          <Check className="w-3 h-3" />
+                          <Check className="h-3.5 w-3.5" aria-hidden />
                         </Button>
-                        <Button
-                          onClick={onCancelEdit}
-                          variant="secondary"
-                          className="p-1"
-                          title="Cancel"
-                        >
-                          <X className="w-3 h-3" />
+                        <Button type="button" onClick={onCancelEdit} variant="secondary" className="p-1.5" title="Cancel">
+                          <X className="h-3.5 w-3.5" aria-hidden />
                         </Button>
                       </div>
                     ) : (
                       <button
                         type="button"
                         onClick={() => onEditCategory(category.id)}
-                        className="text-sm text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                        className="text-sm font-medium text-accent transition-colors hover:text-accent-hover"
                       >
                         {formatCurrency(category.budget)}
                       </button>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900 dark:text-white">
-                      {formatCurrency(category.spent)}
-                    </div>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <div className="text-sm tabular-nums text-fg">{formatCurrency(category.spent)}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className={`text-sm font-medium ${
-                      category.isOverBudget
-                        ? 'text-red-600 dark:text-red-300'
-                        : category.percentageUsed > 80
-                          ? 'text-amber-600 dark:text-amber-300'
-                          : 'text-emerald-600 dark:text-emerald-300'
-                    }`}>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <div
+                      className={`text-sm font-medium tabular-nums ${
+                        category.isOverBudget
+                          ? 'text-red-600 dark:text-red-300'
+                          : category.percentageUsed > 80
+                            ? 'text-amber-600 dark:text-amber-300'
+                            : 'text-emerald-600 dark:text-emerald-300'
+                      }`}
+                    >
                       {category.percentageUsed.toFixed(1)}%
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <CategoryProgressBar
-                      percentage={category.percentageUsed}
-                      isOverBudget={category.isOverBudget}
-                    />
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <CategoryProgressBar percentage={category.percentageUsed} isOverBudget={category.isOverBudget} />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                     {editingCategory !== category.id && (
                       <button
+                        type="button"
                         onClick={() => onEditCategory(category.id)}
-                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        className="rounded-[var(--radius-control)] p-1.5 text-fg-muted transition-colors hover:bg-surface-hover hover:text-fg"
+                        aria-label={`Edit ${category.name}`}
                       >
-                        <Edit3 className="w-4 h-4" />
+                        <Edit3 className="h-4 w-4" aria-hidden />
                       </button>
                     )}
                   </td>
@@ -197,44 +189,48 @@ const BudgetCategoryTable: React.FC<BudgetCategoryTableProps> = ({
         </div>
       </div>
 
-      {/* Mobile Cards */}
-      <div className="lg:hidden space-y-4 p-4">
+      <div className="space-y-4 p-4 lg:hidden">
         {sortedCategories.map((category) => (
-          <div key={category.id} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center">
-                <div className={`w-3 h-3 rounded-full mr-3 ${
-                  category.isOverBudget
-                    ? 'bg-red-600/80'
-                    : category.percentageUsed > 80
-                      ? 'bg-amber-600/80'
-                      : 'bg-emerald-600/80'
-                }`} />
-                <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                  {category.name}
-                </h3>
+          <div
+            key={category.id}
+            className="rounded-[var(--radius-card)] border border-border bg-surface-muted/50 p-4 dark:bg-surface-muted/30"
+          >
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="flex min-w-0 items-center">
+                <div
+                  className={`mr-3 h-3 w-3 shrink-0 rounded-full ${
+                    category.isOverBudget
+                      ? 'bg-red-600/80'
+                      : category.percentageUsed > 80
+                        ? 'bg-amber-600/80'
+                        : 'bg-emerald-600/80'
+                  }`}
+                />
+                <h3 className="truncate text-sm font-medium text-fg">{category.name}</h3>
               </div>
               {editingCategory !== category.id && (
                 <button
+                  type="button"
                   onClick={() => onEditCategory(category.id)}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  className="shrink-0 rounded-[var(--radius-control)] p-1.5 text-fg-muted hover:bg-surface-hover hover:text-fg"
+                  aria-label={`Edit ${category.name}`}
                 >
-                  <Edit3 className="w-4 h-4" />
+                  <Edit3 className="h-4 w-4" aria-hidden />
                 </button>
               )}
             </div>
 
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">Budget:</span>
+                <span className="text-fg-muted">Budget</span>
                 {editingCategory === category.id ? (
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2">
                     <Input
                       type="number"
                       step="0.01"
                       min="0"
                       defaultValue={category.budget}
-                      className="w-24 text-sm text-right"
+                      className="w-24 text-right text-sm"
                       data-category={category.id}
                       onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                         if (e.key === 'Enter') {
@@ -249,6 +245,7 @@ const BudgetCategoryTable: React.FC<BudgetCategoryTableProps> = ({
                       autoFocus
                     />
                     <Button
+                      type="button"
                       onClick={() => {
                         const input = document.querySelector(`input[data-category="${category.id}"]`) as HTMLInputElement;
                         const amount = parseFloat(input?.value || category.budget.toString());
@@ -256,49 +253,40 @@ const BudgetCategoryTable: React.FC<BudgetCategoryTableProps> = ({
                           onSaveCategory(category.id, amount);
                         }
                       }}
-                      className="p-1 bg-green-600 hover:bg-green-700 text-white"
+                      className="p-1.5"
                     >
-                      <Check className="w-3 h-3" />
+                      <Check className="h-3.5 w-3.5" aria-hidden />
                     </Button>
-                    <Button
-                      onClick={onCancelEdit}
-                      variant="secondary"
-                      className="p-1"
-                    >
-                      <X className="w-3 h-3" />
+                    <Button type="button" onClick={onCancelEdit} variant="secondary" className="p-1.5">
+                      <X className="h-3.5 w-3.5" aria-hidden />
                     </Button>
                   </div>
                 ) : (
-                  <span className="text-gray-900 dark:text-white font-medium">
-                    {formatCurrency(category.budget)}
-                  </span>
+                  <span className="font-medium tabular-nums text-fg">{formatCurrency(category.budget)}</span>
                 )}
               </div>
 
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">Spent:</span>
-                <span className="text-gray-900 dark:text-white font-medium">
-                  {formatCurrency(category.spent)}
-                </span>
+                <span className="text-fg-muted">Spent</span>
+                <span className="font-medium tabular-nums text-fg">{formatCurrency(category.spent)}</span>
               </div>
 
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">% Used:</span>
-                <span className={`font-medium ${
-                  category.isOverBudget
-                    ? 'text-red-600 dark:text-red-300'
-                    : category.percentageUsed > 80
-                      ? 'text-amber-600 dark:text-amber-300'
-                      : 'text-emerald-600 dark:text-emerald-300'
-                }`}>
+                <span className="text-fg-muted">% used</span>
+                <span
+                  className={`font-medium tabular-nums ${
+                    category.isOverBudget
+                      ? 'text-red-600 dark:text-red-300'
+                      : category.percentageUsed > 80
+                        ? 'text-amber-600 dark:text-amber-300'
+                        : 'text-emerald-600 dark:text-emerald-300'
+                  }`}
+                >
                   {category.percentageUsed.toFixed(1)}%
                 </span>
               </div>
 
-              <CategoryProgressBar
-                percentage={category.percentageUsed}
-                isOverBudget={category.isOverBudget}
-              />
+              <CategoryProgressBar percentage={category.percentageUsed} isOverBudget={category.isOverBudget} />
             </div>
           </div>
         ))}

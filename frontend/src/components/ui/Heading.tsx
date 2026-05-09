@@ -24,7 +24,7 @@ const sizeMap: Record<Level, string> = {
 const Heading: React.FC<HeadingProps> = ({ level = 2, className = '', children }) => {
   const Tag = (`h${level}` as unknown) as keyof JSX.IntrinsicElements;
   return (
-    <Tag className={`font-semibold tracking-tight text-gray-900 dark:text-gray-100 ${sizeMap[level]} ${className}`}>
+    <Tag className={`font-semibold tracking-tight text-fg ${sizeMap[level]} ${className}`}>
       {children}
     </Tag>
   );
