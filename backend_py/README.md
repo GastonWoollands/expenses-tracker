@@ -2,7 +2,7 @@
 
 A FastAPI-based backend for personal expense tracking with Firebase authentication and Neon PostgreSQL database.
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 backend_py/
@@ -23,7 +23,7 @@ backend_py/
 │   ├── budget_service.py     # Budget management
 │   ├── category_service.py   # Category management
 │   ├── llm_service.py        # AI expense classification
-│   └── sheets_service.py     # Google Sheets integration
+│   └── whatsapp_service.py   # WhatsApp webhook → Neon
 │
 ├── routers/              # API route handlers
 │   └── budget.py         # Budget endpoints
@@ -39,7 +39,7 @@ backend_py/
 │   └── categories.py     # Expense categories definition
 ```
 
-## 🗄️ Database Schema
+## Database Schema
 
 The database schema is defined in `database/schema.sql` and uses Neon PostgreSQL.
 
@@ -66,7 +66,7 @@ The database schema is defined in `database/schema.sql` and uses Neon PostgreSQL
 - User-defined budget limits per category and period
 - Fields: `id` (UUID), `user_id` (TEXT), `category_id`, `amount`, `period` (daily/weekly/monthly/yearly), `created_at`
 
-## 🔄 Service Layer Architecture
+## Service Layer Architecture
 
 ### Core Services
 
@@ -90,12 +90,10 @@ The database schema is defined in `database/schema.sql` and uses Neon PostgreSQL
 - Uses Google Gemini for smart categorization
 - Processes expense descriptions
 
-**SheetsService** (Optional)
-- Google Sheets integration
-- Automatic expense syncing
-- Backup and export functionality
+**WhatsAppService**
+- Classifies incoming WhatsApp expense messages and saves them to Neon PostgreSQL
 
-## 🛡️ Authentication Flow
+## Authentication Flow
 
 ```
 Client Request → Firebase Token → verify_firebase_token() → User Model → Protected Endpoint
@@ -106,7 +104,7 @@ Client Request → Firebase Token → verify_firebase_token() → User Model →
 3. Returns authenticated `User` object
 4. Endpoints use `current_user: User = Depends(get_current_user)`
 
-## 🚀 API Endpoints
+## API Endpoints
 
 ### Authentication
 - `POST /auth/verify` - Verify Firebase token
@@ -139,7 +137,7 @@ Client Request → Firebase Token → verify_firebase_token() → User Model →
 - `GET /income` - Get user income
 - `PUT /income` - Update user income
 
-## 🔧 Environment Setup
+## Environment Setup
 
 Required environment variables (see `env.example`):
 
@@ -155,14 +153,9 @@ FIREBASE_CREDENTIALS_PATH=/path/to/firebase-credentials.json
 # Optional: AI Classification
 GEMINI_API_KEY=your_gemini_api_key
 GEMINI_MODEL_BOT_EXPENSES=gemini-2.5-flash
-
-# Optional: Google Sheets Integration
-GSHEETS_CREDENTIALS=/path/to/sheets-credentials.json
-GSHEETS_SHEET_NAME=Expenses Tracker
-GSHEETS_EMAIL=your-email@example.com
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 1. **Install dependencies**
    ```bash
@@ -186,28 +179,25 @@ GSHEETS_EMAIL=your-email@example.com
    - Swagger UI: `http://localhost:8000/docs`
    - ReDoc: `http://localhost:8000/redoc`
 
-## 🔄 Data Flow
+## Data Flow
 
 ```
 Client → FastAPI → Service Layer → Database
                 ↓
             Optional: AI Classification
-                ↓
-            Optional: Google Sheets Sync
 ```
 
-## 📊 Key Features
+## Key Features
 
 - **Firebase Authentication** - Secure user management
 - **Neon PostgreSQL Database** - Scalable, serverless PostgreSQL
 - **AI-Powered Classification** - Automatic expense categorization
 - **Budget Management** - Category-based budget tracking
 - **Analytics** - Expense summaries and breakdowns
-- **Google Sheets Integration** - Optional data export
 - **Fixed Expenses** - Recurring expense management
 - **RESTful API** - Clean, documented endpoints
 
-## 🛠️ Development
+## Development
 
 The backend follows a clean architecture pattern:
 - **Models**: Data structures and validation

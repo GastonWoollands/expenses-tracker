@@ -12,7 +12,6 @@ import httpx
 
 from database.neon_client import get_neon
 from services.expense_service import ExpenseService
-from services.sheets_service import SheetsService
 from models.expense import ExpenseCreate
 
 # Import utility modules at module level for better performance
@@ -36,7 +35,6 @@ class WhatsAppService:
     
     def __init__(self):
         self.expense_service = ExpenseService()
-        self.sheets_service = SheetsService()
         self._neon = None
     
     @property
@@ -190,29 +188,6 @@ class WhatsAppService:
         except Exception as e:
             logger.error(f"Error saving expense to Neon: {e}")
             raise
-    
-    async def save_expense_to_sheets(
-        self, 
-        user_id: str, 
-        category: str, 
-        amount: float, 
-        date_str: str, 
-        description: str
-    ):
-        """Save expense to Google Sheets (optional)"""
-        try:
-            if self.sheets_service.enabled:
-                # Create a simple expense object for sheets
-                expense_obj = type('Expense', (), {
-                    'category': category,
-                    'amount': amount,
-                    'date': date_str,
-                    'description': description
-                })()
-                await self.sheets_service.add_expense(expense_obj, user_id)
-                logger.info("Expense saved to Google Sheets")
-        except Exception as e:
-            logger.warning(f"Error saving expense to Google Sheets (non-critical): {e}")
     
     async def send_whatsapp_reply(self, to_number: str, message_text: str):
         """Send a reply via WhatsApp API"""
@@ -379,10 +354,7 @@ class WhatsAppService:
             try:
                 expense = await self.save_expense_to_neon(user_id, category, amount, dt, description)
                 logger.info(f"Expense saved: {category} - {amount} - {dt} - {description}")
-                
-                # Save to Google Sheets (optional, non-blocking)
-                await self.save_expense_to_sheets(user_id, category, amount, dt, description)
-                
+
                 # Send confirmation
                 def _fmt_amount(v):
                     try:
