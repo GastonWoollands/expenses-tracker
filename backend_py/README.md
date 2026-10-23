@@ -8,7 +8,6 @@ A FastAPI-based backend for personal expense tracking with Firebase authenticati
 backend_py/
 ├── main.py                 # FastAPI application entry point
 ├── run.py                  # Application runner
-├── requirements.txt        # Python dependencies
 ├── env.example            # Environment variables template
 ├── Procfile               # Railway deployment config
 ├── railway.json           # Railway service config
@@ -157,9 +156,9 @@ GEMINI_MODEL_BOT_EXPENSES=gemini-2.5-flash
 
 ## Quick Start
 
-1. **Install dependencies**
+1. **Install dependencies** (from the repo root, uses `pyproject.toml`)
    ```bash
-   pip install -r requirements.txt
+   poetry install
    ```
 
 2. **Set up environment**
@@ -170,7 +169,7 @@ GEMINI_MODEL_BOT_EXPENSES=gemini-2.5-flash
 
 3. **Run the application**
    ```bash
-   python run.py
+   poetry run python run.py
    # OR
    uvicorn main:app --host 0.0.0.0 --port 8000
    ```
