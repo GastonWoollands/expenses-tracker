@@ -24,9 +24,7 @@ FROM python:3.11-slim
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app \
-    PORT=8000 \
-    POETRY_VIRTUALENVS_CREATE=false \
-    POETRY_NO_INTERACTION=1
+    PORT=8000
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
@@ -34,14 +32,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && pip install --no-cache-dir --upgrade pip
 
-RUN pip install --no-cache-dir poetry poetry-plugin-export
-
 WORKDIR /app
 
-COPY pyproject.toml poetry.lock ./
-
-RUN poetry install --without dev --no-root && \
-    rm -rf /root/.cache/pypoetry
+# Install locked deps with plain pip. Poetry is kept out of the runtime image:
+# installing it here pulls in its own (newer) deps, and the in-place downgrade
+# to locked versions leaves stale compiled files behind (e.g. charset_normalizer).
+COPY --from=builder /tmp/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt && rm /tmp/requirements.txt
 
 # Create non-root user for security
 RUN useradd --create-home --shell /bin/bash app
